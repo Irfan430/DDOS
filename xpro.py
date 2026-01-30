@@ -373,8 +373,6 @@ class UltimateAttack:
     def generate_http_payload(self):
         """Generate sophisticated HTTP payload"""
         methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPT**CONTINUATION OF ULTIMATE main.py:**
-
-```python
         methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'TRACE', 'CONNECT']
         paths = [
             '/', '/index.php', '/wp-admin', '/admin', '/login', '/api/v1',
@@ -725,8 +723,6 @@ Examples:
         
         # Final confirmation
         print(f"\**CONTINUATION OF ULTIMATE main.py:**
-
-```python
         # Final confirmation
         print(f"\n{Fore.YELLOW}[?] Start attack? (y/n): {Style.RESET_ALL}", end='')
         confirm = input().strip().lower()
