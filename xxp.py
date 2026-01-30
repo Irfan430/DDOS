@@ -343,7 +343,6 @@ def test_connection(target, port):
 def main():
     """Main function**CONTINUATION OF FIXED main.py:**
 
-```python
 def main():
     """Main function"""
     # Show banner
