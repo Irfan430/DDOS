@@ -341,10 +341,6 @@ def test_connection(target, port):
         return False
 
 def main():
-    """Main function**CONTINUATION OF FIXED main.py:**
-
-def main():
-    """Main function"""
     # Show banner
     XPROBanner.show()
     
