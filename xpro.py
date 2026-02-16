@@ -1161,9 +1161,7 @@ async def run_smart_attack(target_url):
         AttackState.attacking = False
         time.sleep(1)  # Wait for monitor to update
         
-        # Show final report
-        show_final_report(target)
-        def show_final_report(target):
+       def show_final_report(target):
     """Show comprehensive final attack report"""
     stats = AttackMonitor.calculate_stats()
     
