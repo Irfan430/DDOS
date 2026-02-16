@@ -1145,7 +1145,7 @@ async def run_smart_attack(target_url):
     
     console.print("[yellow]Press Ctrl+C to stop the attack[/]")
     
-    # Countdown
+     # Countdown
     console.print("[yellow]Starting in:[/]")
     for i in range(3, 0, -1):
         console.print(f"[red]{i}...[/]")
@@ -1161,7 +1161,10 @@ async def run_smart_attack(target_url):
         AttackState.attacking = False
         time.sleep(1)  # Wait for monitor to update
         
-       def show_final_report(target):
+        # Show final report
+        show_final_report(target)
+
+def show_final_report(target):
     """Show comprehensive final attack report"""
     stats = AttackMonitor.calculate_stats()
     
@@ -1404,7 +1407,7 @@ def main():
         else:
             console.print("\n[bold green]👋 Thank you for using Advanced Destruction Engine v6.0![/]")
             console.print("[yellow]Remember: Use this tool only for authorized testing![/]")
-            console.print("[cyan]GitHub: https://github.com/Irfan430/crackar[/]")
+            console.print("[cyan]GitHub: https://github.com/Irfan430/DDOS[/]")
             sys.exit(0)
             
     except KeyboardInterrupt:
@@ -1452,6 +1455,6 @@ if __name__ == "__main__":
         console.print("[yellow]Troubleshooting steps:[/]")
         console.print("1. Install requirements: pip install rich aiohttp colorama requests")
         console.print("2. Check Python version (3.7+ required)")
-        console.print("3. Run with: python crackar.py")
-        console.print("4. Report issues: https://github.com/Irfan430/crackar/issues")
+        console.print("3. Run with: python ddos.py")
+        console.print("4. Report issues: https://github.com/Irfan430/DDOS/issues")
         sys.exit(1)
