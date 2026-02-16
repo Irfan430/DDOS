@@ -834,9 +834,6 @@ class PermanentDowntimeEngine:
         
         log_endpoints = [
             '/var/log', '/logs', '/log', '/tmp/logs',
-            '/application/logs', '/**PART 1 CONTINUED...**
-
-```python
             '/application/logs', '/app/logs', '/system/logs',
             '/error_log', '/access_log', '/debug.log',
             '/error.log', '/access.log', '/server.log'
