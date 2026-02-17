@@ -1360,11 +1360,19 @@ def configure_attack():
     console.print(f"  • RPS Limit: {Config.MAX_RPS}")
     console.print(f"  • Duration: {Config.ATTACK_DURATION}s")
     console.print(f"  • Intensity: {Config.ATTACK_INTENSITY.upper()}")
-    console.print(f"  • WAF Bypass: {'[green]ENABLED[/]' if Config.ENABLE_WAF_BYPASS else '[red]DISABLED[/]'}")
-    console.print(f"  • Human-like: {'[green]ENABLED[/]' if Config.HUMAN_LIKE_DELAYS else '[red]DISABLED[/]'}")
-    console.print(f"  • Slowloris: {'[green]ENABLED[/]' if Config.ENABLE_SLOWLORIS else '[red]DISABLED[/]'}")
-    console.print(f"  • Memory Exhaustion: {'[green]ENABLED[/]' if Config.ENABLE_RESOURCE_EXHAUSTION else '[red]DISABLED[/]'}")
-    console.print(f"  • Database Flood: {'[green]ENABLED[/]' if Config.ENABLE_DATABASE_FLOOD else '[red]DISABLED[/]}")
+    
+    # Fixed f-string syntax
+    waf_status = "[green]ENABLED[/]" if Config.ENABLE_WAF_BYPASS else "[red]DISABLED[/]"
+    human_status = "[green]ENABLED[/]" if Config.HUMAN_LIKE_DELAYS else "[red]DISABLED[/]"
+    slowloris_status = "[green]ENABLED[/]" if Config.ENABLE_SLOWLORIS else "[red]DISABLED[/]"
+    memory_status = "[green]ENABLED[/]" if Config.ENABLE_RESOURCE_EXHAUSTION else "[red]DISABLED[/]"
+    db_status = "[green]ENABLED[/]" if Config.ENABLE_DATABASE_FLOOD else "[red]DISABLED[/]"
+    
+    console.print(f"  • WAF Bypass: {waf_status}")
+    console.print(f"  • Human-like: {human_status}")
+    console.print(f"  • Slowloris: {slowloris_status}")
+    console.print(f"  • Memory Exhaustion: {memory_status}")
+    console.print(f"  • Database Flood: {db_status}")
 
 async def run_smart_attack(target_url):
     target = TargetInfo(target_url)
